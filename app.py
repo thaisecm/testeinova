@@ -23,10 +23,18 @@ def extract_text(uploaded_file):
         st.error(f"Erro na extração: {str(e)}")
         return None
 
-def generate_html_report(test_items, filename, initial_checks=None):
+def generate_html_report(test_items, filename, initial_checks=None, user_data=None):
     """Gera um relatório HTML interativo"""
     if initial_checks is None:
         initial_checks = [False] * len(test_items)
+    
+    if user_data is None:
+        user_data = {
+            'tester': '',
+            'requester': '',
+            'environment': '',
+            'directory': ''
+        }
     
     html_content = f"""
 <!DOCTYPE html>
@@ -47,6 +55,25 @@ def generate_html_report(test_items, filename, initial_checks=None):
             margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 1px solid #eee;
+        }}
+        .test-info {{
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f0f8ff;
+            border-radius: 5px;
+        }}
+        .test-info label {{
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }}
+        .test-info input {{
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
         }}
         .test-item {{
             margin-bottom: 10px;
@@ -108,6 +135,21 @@ def generate_html_report(test_items, filename, initial_checks=None):
         <p>Arquivo original: {filename}</p>
     </div>
 
+    <div class="test-info">
+        <h2>Informações do Teste</h2>
+        <label for="tester">Tester responsável:</label>
+        <input type="text" id="tester" value="{user_data['tester']}">
+        
+        <label for="requester">Solicitante:</label>
+        <input type="text" id="requester" value="{user_data['requester']}">
+        
+        <label for="environment">Ambiente utilizado:</label>
+        <input type="text" id="environment" value="{user_data['environment']}">
+        
+        <label for="directory">Diretório dos arquivos:</label>
+        <input type="text" id="directory" value="{user_data['directory']}">
+    </div>
+
     <div class="progress-container">
         <div class="progress-bar" id="progressBar"></div>
     </div>
@@ -167,22 +209,41 @@ def generate_html_report(test_items, filename, initial_checks=None):
 
         // Salva progresso no localStorage
         function saveProgress() {{
+            const userData = {{
+                tester: document.getElementById('tester').value,
+                requester: document.getElementById('requester').value,
+                environment: document.getElementById('environment').value,
+                directory: document.getElementById('directory').value
+            }};
+            
             localStorage.setItem('testProgress', JSON.stringify(testState));
             localStorage.setItem('testLog', JSON.stringify(logEntries));
+            localStorage.setItem('userData', JSON.stringify(userData));
             addLogEntry('Progresso salvo');
             alert('Progresso salvo com sucesso!');
         }}
 
         // Exporta relatório
         function exportReport() {{
+            const userData = {{
+                tester: document.getElementById('tester').value,
+                requester: document.getElementById('requester').value,
+                environment: document.getElementById('environment').value,
+                directory: document.getElementById('directory').value
+            }};
+            
             const report = {{
                 metadata: {{
                     title: 'Relatório de Testes',
                     date: new Date().toLocaleString('pt-BR'),
                     originalFile: '{filename}',
-                    progress: (testState.filter(x => x).length / totalItems * 100).toFixed(2) + '%'
+                    progress: (testState.filter(x => x).length / totalItems * 100).toFixed(2) + '%',
+                    tester: userData.tester,
+                    requester: userData.requester,
+                    environment: userData.environment,
+                    directory: userData.directory
                 }},
-                testItems: testItems,
+                testItems: {json.dumps([item.replace("[ ]", "").replace("[x]", "") for item in test_items])},
                 log: logEntries
             }};
             
@@ -220,12 +281,21 @@ def generate_html_report(test_items, filename, initial_checks=None):
         function loadProgress() {{
             const savedProgress = localStorage.getItem('testProgress');
             const savedLog = localStorage.getItem('testLog');
+            const savedUserData = localStorage.getItem('userData');
             
             if (savedProgress) {{
                 testState = JSON.parse(savedProgress);
                 document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
                     cb.checked = testState[i];
                 }});
+            }}
+            
+            if (savedUserData) {{
+                const userData = JSON.parse(savedUserData);
+                document.getElementById('tester').value = userData.tester || '';
+                document.getElementById('requester').value = userData.requester || '';
+                document.getElementById('environment').value = userData.environment || '';
+                document.getElementById('directory').value = userData.directory || '';
             }}
             
             if (savedLog) {{
@@ -268,7 +338,7 @@ def main():
     st.markdown("""
     ### Como usar:
     1. Faça upload de um arquivo DOCX ou PDF
-    2. Aguarde o processamento
+    2. Preencha as informações do teste
     3. Baixe o relatório HTML interativo
     4. Abra o HTML em qualquer navegador para usar as funcionalidades
     """)
@@ -291,7 +361,16 @@ def main():
                     test_items = [f"- [ ] {line[:250]}" for line in lines if len(line.split()) > 3][:50]
                     
                     if test_items:
-                        html_report = generate_html_report(test_items, uploaded_file.name)
+                        # Coleta informações adicionais do usuário
+                        with st.expander("Informações do Teste", expanded=True):
+                            user_data = {
+                                'tester': st.text_input("Tester responsável:"),
+                                'requester': st.text_input("Solicitante:"),
+                                'environment': st.text_input("Ambiente utilizado:"),
+                                'directory': st.text_input("Diretório dos arquivos:")
+                            }
+                        
+                        html_report = generate_html_report(test_items, uploaded_file.name, user_data=user_data)
                         
                         st.success("✅ Relatório interativo gerado com sucesso!")
                         st.balloons()
