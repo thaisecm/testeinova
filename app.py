@@ -31,9 +31,10 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
     if user_data is None:
         user_data = {
             'tester': '',
-            'requester': '',
-            'environment': '',
-            'directory': ''
+            'client': '',
+            'story_number': '',
+            'test_base': '',
+            'files_used': ''
         }
     
     html_content = f"""
@@ -42,7 +43,7 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Testes - {filename}</title>
+    <title>Controle de Testes - {filename}</title>
     <style>
         body {{
             font-family: Arial, sans-serif;
@@ -56,24 +57,40 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             padding-bottom: 20px;
             border-bottom: 1px solid #eee;
         }}
-        .test-info {{
+        .header h1 {{
+            color: #0054a6;
+        }}
+        .user-data {{
             margin: 20px 0;
             padding: 15px;
-            background-color: #f0f8ff;
+            background-color: #f8f9fa;
             border-radius: 5px;
         }}
-        .test-info label {{
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
+        .user-data-row {{
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
         }}
-        .test-info input {{
+        .user-data-field {{
+            flex: 1;
+        }}
+        .user-data label {{
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }}
+        .user-data input {{
             width: 100%;
             padding: 8px;
-            margin-top: 5px;
             border: 1px solid #ddd;
             border-radius: 4px;
             box-sizing: border-box;
+        }}
+        .section-title {{
+            color: #0054a6;
+            border-bottom: 2px solid #0054a6;
+            padding-bottom: 5px;
+            margin-top: 30px;
         }}
         .test-item {{
             margin-bottom: 10px;
@@ -120,34 +137,64 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
         .button {{
             padding: 10px 15px;
             margin: 5px;
-            background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            font-weight: bold;
+        }}
+        .button-save {{
+            background-color: #4CAF50;
+        }}
+        .button-export {{
+            background-color: #ffc107;
+        }}
+        .button-clear {{
+            background-color: #6c757d;
+        }}
+        .button-reset {{
+            background-color: #dc3545;
+        }}
+        .button-select-all {{
+            background-color: #28a745;
+        }}
+        .button-pending {{
+            background-color: #6c757d;
         }}
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Relatório de Testes</h1>
+        <h1>Controle de Testes</h1>
         <p>Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
         <p>Arquivo original: {filename}</p>
     </div>
 
-    <div class="test-info">
-        <h2>Informações do Teste</h2>
-        <label for="tester">Tester responsável:</label>
-        <input type="text" id="tester" value="{user_data['tester']}">
-        
-        <label for="requester">Solicitante:</label>
-        <input type="text" id="requester" value="{user_data['requester']}">
-        
-        <label for="environment">Ambiente utilizado:</label>
-        <input type="text" id="environment" value="{user_data['environment']}">
-        
-        <label for="directory">Diretório dos arquivos:</label>
-        <input type="text" id="directory" value="{user_data['directory']}">
+    <div class="user-data">
+        <div class="user-data-row">
+            <div class="user-data-field">
+                <label for="tester">Tester responsável:</label>
+                <input type="text" id="tester" value="{user_data['tester']}">
+            </div>
+            <div class="user-data-field">
+                <label for="client">Cliente:</label>
+                <input type="text" id="client" value="{user_data['client']}">
+            </div>
+            <div class="user-data-field">
+                <label for="story_number">Número da história:</label>
+                <input type="text" id="story_number" value="{user_data['story_number']}">
+            </div>
+        </div>
+        <div class="user-data-row">
+            <div class="user-data-field">
+                <label for="test_base">Base de testes:</label>
+                <input type="text" id="test_base" value="{user_data['test_base']}">
+            </div>
+            <div class="user-data-field">
+                <label for="files_used">Arquivos utilizados:</label>
+                <input type="text" id="files_used" value="{user_data['files_used']}">
+            </div>
+        </div>
     </div>
 
     <div class="progress-container">
@@ -157,7 +204,7 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
         <span id="progressText">0% Concluído (0/{len(test_items)})</span>
     </div>
 
-    <h2>Itens de Teste</h2>
+    <h2 class="section-title">Checklist de validação</h2>
     <div id="testItemsContainer">
         {''.join([
             f'<div class="test-item"><input type="checkbox" id="item{i}" {"checked" if initial_checks[i] else ""}>'
@@ -169,10 +216,12 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
     <div class="log-container">
         <h3>Log de Alterações</h3>
         <div id="logEntries"></div>
-        <button class="button" onclick="saveProgress()">Salvar Progresso</button>
-        <button class="button" onclick="exportReport()">Exportar Relatório</button>
-        <button class="button" onclick="clearLog()">Limpar Log</button>
-        <button class="button" onclick="resetTests()">Reiniciar Testes</button>
+        <button class="button button-save" onclick="saveProgress()">Salvar Progresso</button>
+        <button class="button button-export" onclick="exportReport()">Relatório de testes</button>
+        <button class="button button-select-all" onclick="selectAllTests()">Marcar todos</button>
+        <button class="button button-pending" onclick="exportPending()">Ajustes pendentes</button>
+        <button class="button button-clear" onclick="clearLog()">Limpar Log</button>
+        <button class="button button-reset" onclick="resetTests()">Reiniciar Testes</button>
     </div>
 
     <div class="footer">
@@ -211,10 +260,17 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
         function saveProgress() {{
             const userData = {{
                 tester: document.getElementById('tester').value,
-                requester: document.getElementById('requester').value,
-                environment: document.getElementById('environment').value,
-                directory: document.getElementById('directory').value
+                client: document.getElementById('client').value,
+                story_number: document.getElementById('story_number').value,
+                test_base: document.getElementById('test_base').value,
+                files_used: document.getElementById('files_used').value
             }};
+            
+            // Valida campos obrigatórios
+            if (!userData.tester || !userData.client || !userData.story_number || !userData.test_base || !userData.files_used) {{
+                alert('Por favor, preencha todos os campos antes de salvar!');
+                return;
+            }}
             
             localStorage.setItem('testProgress', JSON.stringify(testState));
             localStorage.setItem('testLog', JSON.stringify(logEntries));
@@ -223,25 +279,27 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             alert('Progresso salvo com sucesso!');
         }}
 
-        // Exporta relatório
+        // Exporta relatório completo
         function exportReport() {{
             const userData = {{
                 tester: document.getElementById('tester').value,
-                requester: document.getElementById('requester').value,
-                environment: document.getElementById('environment').value,
-                directory: document.getElementById('directory').value
+                client: document.getElementById('client').value,
+                story_number: document.getElementById('story_number').value,
+                test_base: document.getElementById('test_base').value,
+                files_used: document.getElementById('files_used').value
             }};
             
             const report = {{
                 metadata: {{
-                    title: 'Relatório de Testes',
+                    title: 'Controle de Testes',
                     date: new Date().toLocaleString('pt-BR'),
                     originalFile: '{filename}',
                     progress: (testState.filter(x => x).length / totalItems * 100).toFixed(2) + '%',
                     tester: userData.tester,
-                    requester: userData.requester,
-                    environment: userData.environment,
-                    directory: userData.directory
+                    client: userData.client,
+                    story_number: userData.story_number,
+                    test_base: userData.test_base,
+                    files_used: userData.files_used
                 }},
                 testItems: {json.dumps([item.replace("[ ]", "").replace("[x]", "") for item in test_items])},
                 log: logEntries
@@ -251,9 +309,43 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'relatorio_testes_{filename.split('.')[0]}.json';
+            a.download = 'controle_testes_{filename.split('.')[0]}.json';
             a.click();
-            addLogEntry('Relatório exportado');
+            addLogEntry('Relatório completo exportado');
+        }}
+
+        // Exporta apenas itens pendentes
+        function exportPending() {{
+            const pendingItems = testState.map((checked, i) => !checked ? testItems[i] : null).filter(item => item !== null);
+            
+            if (pendingItems.length === 0) {{
+                alert('Não há itens pendentes!');
+                return;
+            }}
+            
+            const report = {{
+                pendingItems: pendingItems,
+                totalPending: pendingItems.length,
+                totalItems: totalItems
+            }};
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], {{ type: 'application/json' }});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ajustes_pendentes_{filename.split('.')[0]}.json';
+            a.click();
+            addLogEntry('Ajustes pendentes exportados');
+        }}
+
+        // Marca todos os itens
+        function selectAllTests() {{
+            testState = Array(totalItems).fill(true);
+            document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
+                cb.checked = true;
+            }});
+            updateProgress();
+            addLogEntry('Todos os itens marcados');
         }}
 
         // Limpa o log
@@ -293,9 +385,10 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             if (savedUserData) {{
                 const userData = JSON.parse(savedUserData);
                 document.getElementById('tester').value = userData.tester || '';
-                document.getElementById('requester').value = userData.requester || '';
-                document.getElementById('environment').value = userData.environment || '';
-                document.getElementById('directory').value = userData.directory || '';
+                document.getElementById('client').value = userData.client || '';
+                document.getElementById('story_number').value = userData.story_number || '';
+                document.getElementById('test_base').value = userData.test_base || '';
+                document.getElementById('files_used').value = userData.files_used || '';
             }}
             
             if (savedLog) {{
@@ -332,9 +425,9 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
     return html_content
 
 def main():
-    st.set_page_config(page_title="Gerador de Testes Interativo", layout="centered")
+    st.set_page_config(page_title="Controle de Testes", layout="centered")
     
-    st.title("📋 Gerador de Testes Interativo")
+    st.title("📋 Controle de Testes")
     st.markdown("""
     ### Como usar:
     1. Faça upload de um arquivo DOCX ou PDF
@@ -363,12 +456,22 @@ def main():
                     if test_items:
                         # Coleta informações adicionais do usuário
                         with st.expander("Informações do Teste", expanded=True):
-                            user_data = {
-                                'tester': st.text_input("Tester responsável:"),
-                                'requester': st.text_input("Solicitante:"),
-                                'environment': st.text_input("Ambiente utilizado:"),
-                                'directory': st.text_input("Diretório dos arquivos:")
-                            }
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                tester = st.text_input("Tester responsável:")
+                                client = st.text_input("Cliente:")
+                                story_number = st.text_input("Número da história:")
+                            with col2:
+                                test_base = st.text_input("Base de testes:")
+                                files_used = st.text_input("Arquivos utilizados:")
+                        
+                        user_data = {
+                            'tester': tester,
+                            'client': client,
+                            'story_number': story_number,
+                            'test_base': test_base,
+                            'files_used': files_used
+                        }
                         
                         html_report = generate_html_report(test_items, uploaded_file.name, user_data=user_data)
                         
@@ -376,9 +479,9 @@ def main():
                         st.balloons()
                         
                         st.download_button(
-                            label="⬇️ Baixar Relatório HTML Interativo",
+                            label="⬇️ Baixar Controle de Testes",
                             data=html_report,
-                            file_name=f"relatorio_interativo_{uploaded_file.name.split('.')[0]}.html",
+                            file_name=f"controle_testes_{uploaded_file.name.split('.')[0]}.html",
                             mime="text/html"
                         )
                     else:
