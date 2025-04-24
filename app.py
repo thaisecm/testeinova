@@ -45,215 +45,124 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Testes - {filename}</title>
     <style>
-        :root {{
-            --primary-color: #0054a6;
-            --secondary-color: #00a0e3;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-            --border-color: #dee2e6;
-        }}
+        /* ... (mantenha todos os estilos existentes) ... */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Controle de Testes</h1>
+            <p>Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+            <p>Arquivo original: {filename}</p>
+        </header>
         
-        body {{
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
-            padding: 20px;
-        }}
+        <div class="info-section">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="responsavel">Responsável pelo Teste:</label>
+                    <input type="text" id="responsavel" value="{user_data['responsavel']}" placeholder="Digite seu nome">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="base-testes">Base de Testes:</label>
+                    <input type="text" id="base-testes" value="{user_data['base_testes']}" placeholder="Digite a base de testes">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="cliente">Cliente:</label>
+                    <input type="text" id="cliente" value="{user_data['cliente']}" placeholder="Digite o nome do cliente">
+                </div>
+                <div class="form-group">
+                    <label for="numero-historia">Número da História:</label>
+                    <input type="text" id="numero-historia" value="{user_data['numero_historia']}" placeholder="Digite o número da história">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="arquivos-utilizados">Arquivos Utilizados:</label>
+                    <input type="text" id="arquivos-utilizados" value="{user_data['arquivos_utilizados']}" placeholder="Digite os arquivos utilizados">
+                </div>
+            </div>
+        </div>
         
-        .container {{
-            max-width: 1000px;
-            margin: 0 auto;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-        }}
-        
-        header {{
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }}
-        
-        h1 {{
-            color: var(--primary-color);
-            font-size: 1.8rem;
-        }}
-        
-        .info-section {{
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: var(--light-color);
-            border-radius: 5px;
-        }}
-        
-        .form-row {{
-            display: flex;
-            gap: 20px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }}
-        
-        .form-group {{
-            flex: 1;
-            min-width: 200px;
-        }}
-        
-        .form-group-small {{
-            flex: 0.5;
-            min-width: 150px;
-        }}
-        
-        .form-group-medium {{
-            flex: 0.75;
-            min-width: 180px;
-        }}
-        
-        label {{
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }}
-        
-        input[type="text"] {{
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 1rem;
-        }}
-        
-        .section-title {{
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--secondary-color);
-            padding-bottom: 5px;
-            margin: 25px 0 15px;
-        }}
-        
-        .checklist-item {{
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            background-color: white;
-        }}
-        
-        .checklist-item:hover {{
-            background-color: #f8f9fa;
-        }}
-        
-        .checklist-item input[type="checkbox"] {{
-            margin-right: 10px;
-            margin-top: 3px;
-            min-width: 18px;
-            height: 18px;
-        }}
-        
-        .checklist-item label {{
-            font-weight: normal;
-            cursor: pointer;
-            flex-grow: 1;
-        }}
-        
-        .status-bar {{
-            margin: 20px 0;
-            padding: 10px;
-            border-radius: 4px;
-            text-align: center;
-            font-weight: 600;
-        }}
-        
-        .status-incomplete {{
-            background-color: #fff3cd;
-            color: #856404;
-        }}
-        
-        .status-complete {{
-            background-color: #d4edda;
-            color: #155724;
-        }}
-        
-        .buttons {{
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }}
-        
-        button {{
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s;
-        }}
-        
-        .btn-primary {{
-            background-color: var(--primary-color);
-            color: white;
-        }}
-        
-        .btn-success {{
-            background-color: var(--success-color);
-            color: white;
-        }}
-        
-        .btn-danger {{
-            background-color: var(--danger-color);
-            color: white;
-        }}
-        
-        .btn-warning {{
-            background-color: var(--warning-color);
-            color: #212529;
-        }}
-        
-        .btn-secondary {{
-            background-color: var(--dark-color);
-            color: white;
-        }}
-        
-        .log-container {{
-            margin-top: 30px;
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 10px;
-            background-color: #f8f9fa;
-        }}
-        
-        .log-entry {{
-            margin-bottom: 5px;
-            padding: 5px;
-            border-bottom: 1px solid #eee;
-            font-size: 0.9rem;
-        }}
-        
-        footer {{
-            margin-top: 30px;
-            text-align: center;
-            color: #6c757d;
-            font-size: 0.9rem;
-        }}
-        
-        @media (max-width: 768px) {{
-            .container {{
-                padding: 15px;
-            }}
+        <!-- ... (restante do conteúdo permanece igual) ... -->
+    </div>
+
+    <script>
+        // ... (mantenha todo o JavaScript existente) ...
+    </script>
+</body>
+</html>
+    """
+    return html_content
+
+def main():
+    st.set_page_config(page_title="Controle de Testes", layout="centered")
+    
+    st.title("📋 Controle de Testes")
+    st.markdown("""
+    ### Como usar:
+    1. Faça upload de um arquivo DOCX ou PDF
+    2. Preencha as informações do teste
+    3. Baixe o relatório HTML interativo
+    4. Abra o HTML em qualquer navegador para usar as funcionalidades
+    """)
+    
+    uploaded_file = st.file_uploader(
+        "Arraste e solte seu arquivo aqui (DOCX ou PDF)",
+        type=['docx', 'pdf'],
+        accept_multiple_files=False,
+        help="Tamanho máximo: 200MB"
+    )
+    
+    if uploaded_file:
+        with st.spinner("Processando arquivo..."):
+            try:
+                text_content = extract_text(uploaded_file)
+                
+                if text_content:
+                    lines = [line.strip() for line in text_content.split('\n') if line.strip()]
+                    test_items = [f"- [ ] {line[:250]}" for line in lines if len(line.split()) > 3][:50]
+                    
+                    if test_items:
+                        with st.expander("Informações do Teste", expanded=True):
+                            st.text_input("Responsável pelo Teste:", key="responsavel", placeholder="Digite seu nome", max_chars=15)
+                            st.text_input("Base de Testes:", key="base_testes", placeholder="Digite a base de testes")
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.text_input("Cliente:", key="cliente", placeholder="Digite o nome do cliente", max_chars=20)
+                            with col2:
+                                st.text_input("Número da História:", key="numero_historia", placeholder="Digite o número da história")
+                            st.text_input("Arquivos Utilizados:", key="arquivos_utilizados", placeholder="Digite os arquivos utilizados")
+                        
+                        user_data = {
+                            'responsavel': st.session_state.responsavel,
+                            'cliente': st.session_state.cliente,
+                            'numero_historia': st.session_state.numero_historia,
+                            'base_testes': st.session_state.base_testes,
+                            'arquivos_utilizados': st.session_state.arquivos_utilizados
+                        }
+                        
+                        html_report = generate_html_report(test_items, uploaded_file.name, user_data=user_data)
+                        
+                        st.success("✅ Relatório interativo gerado com sucesso!")
+                        st.balloons()
+                        
+                        st.download_button(
+                            label="⬇️ Baixar Controle de Testes",
+                            data=html_report,
+                            file_name=f"controle_testes_{uploaded_file.name.split('.')[0]}.html",
+                            mime="text/html"
+                        )
+                    else:
+                        st.warning("Não foram identificados itens de teste no documento.")
+                else:
+                    st.error("Não foi possível extrair conteúdo do arquivo")
             
-            .form-row {{
-                flex-direction: column;
-                gap: 15px;
-            }}
-            
-            .form-group, .form-group-small, .form-group-medium {{
-                flex: 1
+            except Exception as e:
+                st.error(f"Erro durante o processamento: {str(e)}")
+
+if __name__ == "__main__":
+    main()
