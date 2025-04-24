@@ -105,6 +105,16 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             min-width: 200px;
         }}
         
+        .form-group-small {{
+            flex: 0.5;
+            min-width: 150px;
+        }}
+        
+        .form-group-medium {{
+            flex: 0.75;
+            min-width: 180px;
+        }}
+        
         label {{
             display: block;
             margin-bottom: 5px;
@@ -247,6 +257,11 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
                 gap: 15px;
             }}
             
+            .form-group, .form-group-small, .form-group-medium {{
+                flex: 1;
+                min-width: 100%;
+            }}
+            
             .buttons {{
                 flex-direction: column;
             }}
@@ -267,22 +282,22 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
         
         <div class="info-section">
             <div class="form-row">
-                <div class="form-group">
-                    <label for="responsavel">Responsável pelo Teste:</label>
-                    <input type="text" id="responsavel" value="{user_data['responsavel']}">
+                <div class="form-group-small">
+                    <label for="responsavel">Responsável:</label>
+                    <input type="text" id="responsavel" value="{user_data['responsavel']}" maxlength="15">
                 </div>
-                <div class="form-group">
+                <div class="form-group-small">
                     <label for="data-teste">Data do Teste:</label>
                     <input type="date" id="data-teste" value="{user_data['data_teste']}">
                 </div>
-                <div class="form-group">
+                <div class="form-group-medium">
                     <label for="cliente">Cliente:</label>
-                    <input type="text" id="cliente" value="{user_data['cliente']}">
+                    <input type="text" id="cliente" value="{user_data['cliente']}" maxlength="20">
                 </div>
             </div>
             <div class="form-row">
-                <div class="form-group">
-                    <label for="numero-historia">Número da História:</label>
+                <div class="form-group-small">
+                    <label for="numero-historia">Nº História:</label>
                     <input type="text" id="numero-historia" value="{user_data['numero_historia']}">
                 </div>
                 <div class="form-group">
@@ -313,9 +328,9 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
         <div class="buttons">
             <button class="btn-primary" onclick="saveProgress()">Salvar Progresso</button>
             <button class="btn-success" onclick="selectAllTests()">Marcar Todos</button>
+            <button class="btn-danger" onclick="resetTests()">Reiniciar Testes</button>
             <button class="btn-warning" onclick="exportReport()">Relatório de Testes</button>
             <button class="btn-secondary" onclick="exportPending()">Ajustes Pendentes</button>
-            <button class="btn-danger" onclick="resetTests()">Reiniciar Testes</button>
         </div>
         
         <h3 class="section-title">Log de Alterações</h3>
@@ -576,11 +591,11 @@ def main():
                         with st.expander("Informações do Teste", expanded=True):
                             col1, col2 = st.columns(2)
                             with col1:
-                                responsavel = st.text_input("Responsável pelo Teste:")
-                                cliente = st.text_input("Cliente:")
+                                responsavel = st.text_input("Responsável:", max_chars=15)
+                                cliente = st.text_input("Cliente:", max_chars=20)
                                 data_teste = st.date_input("Data do Teste:")
                             with col2:
-                                numero_historia = st.text_input("Número da História:")
+                                numero_historia = st.text_input("Nº História:")
                                 base_testes = st.text_input("Base de Testes:")
                                 arquivos_utilizados = st.text_input("Arquivos Utilizados:")
                         
