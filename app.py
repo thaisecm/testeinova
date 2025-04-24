@@ -24,17 +24,18 @@ def extract_text(uploaded_file):
         return None
 
 def generate_html_report(test_items, filename, initial_checks=None, user_data=None):
-    """Gera um relatório HTML interativo"""
+    """Gera um relatório HTML interativo com o novo design"""
     if initial_checks is None:
         initial_checks = [False] * len(test_items)
     
     if user_data is None:
         user_data = {
-            'tester': '',
-            'client': '',
-            'story_number': '',
-            'test_base': '',
-            'files_used': ''
+            'responsavel': '',
+            'cliente': '',
+            'numero_historia': '',
+            'base_testes': '',
+            'arquivos_utilizados': '',
+            'data_teste': datetime.now().strftime('%Y-%m-%d')
         }
     
     html_content = f"""
@@ -45,187 +46,284 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Testes - {filename}</title>
     <style>
+        :root {{
+            --primary-color: #0054a6;
+            --secondary-color: #00a0e3;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --border-color: #dee2e6;
+        }}
+        
         body {{
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            margin: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
             color: #333;
+            line-height: 1.6;
+            padding: 20px;
         }}
-        .header {{
+        
+        .container {{
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }}
+        
+        header {{
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             padding-bottom: 20px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border-color);
         }}
-        .header h1 {{
-            color: #0054a6;
+        
+        h1 {{
+            color: var(--primary-color);
+            font-size: 1.8rem;
         }}
-        .user-data {{
-            margin: 20px 0;
+        
+        .info-section {{
+            margin-bottom: 20px;
             padding: 15px;
-            background-color: #f8f9fa;
+            background-color: var(--light-color);
             border-radius: 5px;
         }}
-        .user-data-row {{
+        
+        .form-row {{
             display: flex;
             gap: 20px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
         }}
-        .user-data-field {{
+        
+        .form-group {{
             flex: 1;
+            min-width: 200px;
         }}
-        .user-data label {{
+        
+        label {{
             display: block;
-            font-weight: bold;
             margin-bottom: 5px;
+            font-weight: 600;
         }}
-        .user-data input {{
+        
+        input[type="text"], 
+        input[type="date"] {{
             width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
-            box-sizing: border-box;
+            font-size: 1rem;
         }}
+        
         .section-title {{
-            color: #0054a6;
-            border-bottom: 2px solid #0054a6;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
             padding-bottom: 5px;
-            margin-top: 30px;
+            margin: 25px 0 15px;
         }}
-        .test-item {{
-            margin-bottom: 10px;
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
+        
+        .checklist-item {{
             display: flex;
-            align-items: center;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: white;
         }}
-        .test-item input {{
-            margin-right: 15px;
-            transform: scale(1.5);
+        
+        .checklist-item:hover {{
+            background-color: #f8f9fa;
         }}
-        .footer {{
-            margin-top: 30px;
-            text-align: center;
-            color: #777;
-            font-size: 0.9em;
+        
+        .checklist-item input[type="checkbox"] {{
+            margin-right: 10px;
+            margin-top: 3px;
+            min-width: 18px;
+            height: 18px;
         }}
-        .progress-container {{
+        
+        .checklist-item label {{
+            font-weight: normal;
+            cursor: pointer;
+            flex-grow: 1;
+        }}
+        
+        .status-bar {{
             margin: 20px 0;
-            background-color: #f0f0f0;
-            border-radius: 10px;
-            height: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: 600;
         }}
-        .progress-bar {{
-            height: 100%;
-            border-radius: 10px;
-            background-color: #4CAF50;
-            width: 0%;
-            transition: width 0.3s;
+        
+        .status-incomplete {{
+            background-color: #fff3cd;
+            color: #856404;
         }}
-        .log-container {{
-            margin-top: 30px;
-            padding: 15px;
-            background-color: #f5f5f5;
-            border-radius: 5px;
+        
+        .status-complete {{
+            background-color: #d4edda;
+            color: #155724;
         }}
-        .log-entry {{
-            margin: 5px 0;
-            padding: 5px;
-            font-size: 0.9em;
+        
+        .buttons {{
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
         }}
-        .button {{
+        
+        button {{
             padding: 10px 15px;
-            margin: 5px;
-            color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
+            transition: background-color 0.3s;
         }}
-        .button-save {{
-            background-color: #4CAF50;
+        
+        .btn-primary {{
+            background-color: var(--primary-color);
+            color: white;
         }}
-        .button-export {{
-            background-color: #ffc107;
+        
+        .btn-success {{
+            background-color: var(--success-color);
+            color: white;
         }}
-        .button-clear {{
-            background-color: #6c757d;
+        
+        .btn-danger {{
+            background-color: var(--danger-color);
+            color: white;
         }}
-        .button-reset {{
-            background-color: #dc3545;
+        
+        .btn-warning {{
+            background-color: var(--warning-color);
+            color: #212529;
         }}
-        .button-select-all {{
-            background-color: #28a745;
+        
+        .btn-secondary {{
+            background-color: var(--dark-color);
+            color: white;
         }}
-        .button-pending {{
-            background-color: #6c757d;
+        
+        .log-container {{
+            margin-top: 30px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }}
+        
+        .log-entry {{
+            margin-bottom: 5px;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }}
+        
+        footer {{
+            margin-top: 30px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }}
+        
+        @media (max-width: 768px) {{
+            .container {{
+                padding: 15px;
+            }}
+            
+            .form-row {{
+                flex-direction: column;
+                gap: 15px;
+            }}
+            
+            .buttons {{
+                flex-direction: column;
+            }}
+            
+            button {{
+                width: 100%;
+            }}
         }}
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Controle de Testes</h1>
-        <p>Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
-        <p>Arquivo original: {filename}</p>
-    </div>
-
-    <div class="user-data">
-        <div class="user-data-row">
-            <div class="user-data-field">
-                <label for="tester">Tester responsável:</label>
-                <input type="text" id="tester" value="{user_data['tester']}">
+    <div class="container">
+        <header>
+            <h1>Controle de Testes</h1>
+            <p>Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+            <p>Arquivo original: {filename}</p>
+        </header>
+        
+        <div class="info-section">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="responsavel">Responsável pelo Teste:</label>
+                    <input type="text" id="responsavel" value="{user_data['responsavel']}">
+                </div>
+                <div class="form-group">
+                    <label for="data-teste">Data do Teste:</label>
+                    <input type="date" id="data-teste" value="{user_data['data_teste']}">
+                </div>
+                <div class="form-group">
+                    <label for="cliente">Cliente:</label>
+                    <input type="text" id="cliente" value="{user_data['cliente']}">
+                </div>
             </div>
-            <div class="user-data-field">
-                <label for="client">Cliente:</label>
-                <input type="text" id="client" value="{user_data['client']}">
-            </div>
-            <div class="user-data-field">
-                <label for="story_number">Número da história:</label>
-                <input type="text" id="story_number" value="{user_data['story_number']}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="numero-historia">Número da História:</label>
+                    <input type="text" id="numero-historia" value="{user_data['numero_historia']}">
+                </div>
+                <div class="form-group">
+                    <label for="base-testes">Base de Testes:</label>
+                    <input type="text" id="base-testes" value="{user_data['base_testes']}">
+                </div>
+                <div class="form-group">
+                    <label for="arquivos-utilizados">Arquivos Utilizados:</label>
+                    <input type="text" id="arquivos-utilizados" value="{user_data['arquivos_utilizados']}">
+                </div>
             </div>
         </div>
-        <div class="user-data-row">
-            <div class="user-data-field">
-                <label for="test_base">Base de testes:</label>
-                <input type="text" id="test_base" value="{user_data['test_base']}">
-            </div>
-            <div class="user-data-field">
-                <label for="files_used">Arquivos utilizados:</label>
-                <input type="text" id="files_used" value="{user_data['files_used']}">
-            </div>
+        
+        <h2 class="section-title">Checklist de Validação</h2>
+        
+        <div id="testItemsContainer">
+            {''.join([
+                f'<div class="checklist-item"><input type="checkbox" id="item{i}" {"checked" if initial_checks[i] else ""}>'
+                f'<label for="item{i}">{item.replace("[ ]", "").replace("[x]", "")}</label></div>'
+                for i, item in enumerate(test_items)
+            ])}
         </div>
-    </div>
-
-    <div class="progress-container">
-        <div class="progress-bar" id="progressBar"></div>
-    </div>
-    <div style="text-align: center; margin-bottom: 20px;">
-        <span id="progressText">0% Concluído (0/{len(test_items)})</span>
-    </div>
-
-    <h2 class="section-title">Checklist de validação</h2>
-    <div id="testItemsContainer">
-        {''.join([
-            f'<div class="test-item"><input type="checkbox" id="item{i}" {"checked" if initial_checks[i] else ""}>'
-            f'<label for="item{i}">{item.replace("[ ]", "").replace("[x]", "")}</label></div>'
-            for i, item in enumerate(test_items)
-        ])}
-    </div>
-
-    <div class="log-container">
-        <h3>Log de Alterações</h3>
-        <div id="logEntries"></div>
-        <button class="button button-save" onclick="saveProgress()">Salvar Progresso</button>
-        <button class="button button-export" onclick="exportReport()">Relatório de testes</button>
-        <button class="button button-select-all" onclick="selectAllTests()">Marcar todos</button>
-        <button class="button button-pending" onclick="exportPending()">Ajustes pendentes</button>
-        <button class="button button-clear" onclick="clearLog()">Limpar Log</button>
-        <button class="button button-reset" onclick="resetTests()">Reiniciar Testes</button>
-    </div>
-
-    <div class="footer">
-        <p>Relatório gerado automaticamente</p>
+        
+        <div class="status-bar status-incomplete" id="status-bar">
+            0 de {len(test_items)} itens verificados (0%)
+        </div>
+        
+        <div class="buttons">
+            <button class="btn-primary" onclick="saveProgress()">Salvar Progresso</button>
+            <button class="btn-success" onclick="selectAllTests()">Marcar Todos</button>
+            <button class="btn-warning" onclick="exportReport()">Relatório de Testes</button>
+            <button class="btn-secondary" onclick="exportPending()">Ajustes Pendentes</button>
+            <button class="btn-danger" onclick="resetTests()">Reiniciar Testes</button>
+        </div>
+        
+        <h3 class="section-title">Log de Alterações</h3>
+        <div class="log-container" id="logEntries"></div>
+        
+        <footer>
+            <p>© {datetime.now().strftime('%Y')} - Relatório gerado automaticamente</p>
+        </footer>
     </div>
 
     <script>
@@ -234,13 +332,21 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
         let testState = {json.dumps(initial_checks)};
         let logEntries = [];
 
-        // Atualiza progresso
-        function updateProgress() {{
+        // Atualiza a barra de status
+        function updateStatusBar() {{
             const checkedCount = testState.filter(x => x).length;
             const percentage = Math.round((checkedCount / totalItems) * 100);
-            document.getElementById('progressBar').style.width = percentage + '%';
-            document.getElementById('progressText').textContent = 
-                percentage + '% Concluído (' + checkedCount + '/' + totalItems + ')';
+            const statusBar = document.getElementById('status-bar');
+            
+            statusBar.textContent = `${{checkedCount}} de ${{totalItems}} itens verificados (${{percentage}}%)`;
+            
+            if (checkedCount === totalItems) {{
+                statusBar.classList.remove('status-incomplete');
+                statusBar.classList.add('status-complete');
+            }} else {{
+                statusBar.classList.remove('status-complete');
+                statusBar.classList.add('status-incomplete');
+            }}
         }}
 
         // Adiciona entrada no log
@@ -254,20 +360,23 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             entryElement.className = 'log-entry';
             entryElement.textContent = logEntries[logEntries.length - 1];
             logContainer.appendChild(entryElement);
+            logContainer.scrollTop = logContainer.scrollHeight;
         }}
 
         // Salva progresso no localStorage
         function saveProgress() {{
             const userData = {{
-                tester: document.getElementById('tester').value,
-                client: document.getElementById('client').value,
-                story_number: document.getElementById('story_number').value,
-                test_base: document.getElementById('test_base').value,
-                files_used: document.getElementById('files_used').value
+                responsavel: document.getElementById('responsavel').value,
+                data_teste: document.getElementById('data-teste').value,
+                cliente: document.getElementById('cliente').value,
+                numero_historia: document.getElementById('numero-historia').value,
+                base_testes: document.getElementById('base-testes').value,
+                arquivos_utilizados: document.getElementById('arquivos-utilizados').value
             }};
             
             // Valida campos obrigatórios
-            if (!userData.tester || !userData.client || !userData.story_number || !userData.test_base || !userData.files_used) {{
+            if (!userData.responsavel || !userData.cliente || !userData.numero_historia || 
+                !userData.base_testes || !userData.arquivos_utilizados) {{
                 alert('Por favor, preencha todos os campos antes de salvar!');
                 return;
             }}
@@ -275,31 +384,46 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             localStorage.setItem('testProgress', JSON.stringify(testState));
             localStorage.setItem('testLog', JSON.stringify(logEntries));
             localStorage.setItem('userData', JSON.stringify(userData));
-            addLogEntry('Progresso salvo');
+            
+            addLogEntry('Progresso salvo com sucesso');
             alert('Progresso salvo com sucesso!');
+        }}
+
+        // Marca todos os itens
+        function selectAllTests() {{
+            testState = Array(totalItems).fill(true);
+            document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
+                cb.checked = true;
+            }});
+            updateStatusBar();
+            addLogEntry('Todos os itens foram marcados');
         }}
 
         // Exporta relatório completo
         function exportReport() {{
             const userData = {{
-                tester: document.getElementById('tester').value,
-                client: document.getElementById('client').value,
-                story_number: document.getElementById('story_number').value,
-                test_base: document.getElementById('test_base').value,
-                files_used: document.getElementById('files_used').value
+                responsavel: document.getElementById('responsavel').value,
+                data_teste: document.getElementById('data-teste').value,
+                cliente: document.getElementById('cliente').value,
+                numero_historia: document.getElementById('numero-historia').value,
+                base_testes: document.getElementById('base-testes').value,
+                arquivos_utilizados: document.getElementById('arquivos-utilizados').value
             }};
+            
+            const checkedCount = testState.filter(x => x).length;
+            const percentage = Math.round((checkedCount / totalItems) * 100);
             
             const report = {{
                 metadata: {{
-                    title: 'Controle de Testes',
+                    title: 'Relatório de Testes',
                     date: new Date().toLocaleString('pt-BR'),
                     originalFile: '{filename}',
-                    progress: (testState.filter(x => x).length / totalItems * 100).toFixed(2) + '%',
-                    tester: userData.tester,
-                    client: userData.client,
-                    story_number: userData.story_number,
-                    test_base: userData.test_base,
-                    files_used: userData.files_used
+                    progress: `${{percentage}}% (${{checkedCount}}/${{totalItems}})`,
+                    responsavel: userData.responsavel,
+                    cliente: userData.cliente,
+                    numero_historia: userData.numero_historia,
+                    base_testes: userData.base_testes,
+                    arquivos_utilizados: userData.arquivos_utilizados
                 }},
                 testItems: {json.dumps([item.replace("[ ]", "").replace("[x]", "") for item in test_items])},
                 log: logEntries
@@ -309,12 +433,13 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'controle_testes_{filename.split('.')[0]}.json';
+            a.download = 'relatorio_testes_{filename.split('.')[0]}.json';
             a.click();
-            addLogEntry('Relatório completo exportado');
+            
+            addLogEntry('Relatório de testes exportado');
         }}
 
-        // Exporta apenas itens pendentes
+        // Exporta itens pendentes
         function exportPending() {{
             const pendingItems = testState.map((checked, i) => !checked ? testItems[i] : null).filter(item => item !== null);
             
@@ -326,7 +451,8 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             const report = {{
                 pendingItems: pendingItems,
                 totalPending: pendingItems.length,
-                totalItems: totalItems
+                totalItems: totalItems,
+                date: new Date().toLocaleString('pt-BR')
             }};
             
             const blob = new Blob([JSON.stringify(report, null, 2)], {{ type: 'application/json' }});
@@ -335,26 +461,8 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             a.href = url;
             a.download = 'ajustes_pendentes_{filename.split('.')[0]}.json';
             a.click();
+            
             addLogEntry('Ajustes pendentes exportados');
-        }}
-
-        // Marca todos os itens
-        function selectAllTests() {{
-            testState = Array(totalItems).fill(true);
-            document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
-                cb.checked = true;
-            }});
-            updateProgress();
-            addLogEntry('Todos os itens marcados');
-        }}
-
-        // Limpa o log
-        function clearLog() {{
-            if (confirm('Tem certeza que deseja limpar o log?')) {{
-                logEntries = [];
-                document.getElementById('logEntries').innerHTML = '';
-                addLogEntry('Log limpo');
-            }}
         }}
 
         // Reinicia todos os testes
@@ -364,8 +472,8 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
                 document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
                     cb.checked = false;
                 }});
-                updateProgress();
-                addLogEntry('Testes reiniciados');
+                updateStatusBar();
+                addLogEntry('Todos os testes foram reiniciados');
             }}
         }}
 
@@ -384,11 +492,12 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             
             if (savedUserData) {{
                 const userData = JSON.parse(savedUserData);
-                document.getElementById('tester').value = userData.tester || '';
-                document.getElementById('client').value = userData.client || '';
-                document.getElementById('story_number').value = userData.story_number || '';
-                document.getElementById('test_base').value = userData.test_base || '';
-                document.getElementById('files_used').value = userData.files_used || '';
+                document.getElementById('responsavel').value = userData.responsavel || '';
+                document.getElementById('data-teste').value = userData.data_teste || '{datetime.now().strftime('%Y-%m-%d')}';
+                document.getElementById('cliente').value = userData.cliente || '';
+                document.getElementById('numero-historia').value = userData.numero_historia || '';
+                document.getElementById('base-testes').value = userData.base_testes || '';
+                document.getElementById('arquivos-utilizados').value = userData.arquivos_utilizados || '';
             }}
             
             if (savedLog) {{
@@ -402,21 +511,30 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
                 }});
             }}
             
-            updateProgress();
+            updateStatusBar();
         }}
 
         // Configura eventos
         document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
             cb.addEventListener('change', function() {{
                 testState[i] = this.checked;
-                updateProgress();
-                addLogEntry(`Item ${{i+1}} - ${{this.checked ? 'marcado' : 'desmarcado'}}`);
+                updateStatusBar();
+                const action = this.checked ? 'marcou' : 'desmarcou';
+                const itemText = this.nextElementSibling.textContent.trim();
+                addLogEntry(`${{action}} o item: ${{itemText}}`);
             }});
         }});
 
         // Inicializa
         window.onload = function() {{
             loadProgress();
+            
+            // Adiciona data atual se não estiver definida
+            if (!document.getElementById('data-teste').value) {{
+                document.getElementById('data-teste').value = '{datetime.now().strftime('%Y-%m-%d')}';
+            }}
+            
+            addLogEntry('Documento carregado');
         }};
     </script>
 </body>
@@ -458,19 +576,21 @@ def main():
                         with st.expander("Informações do Teste", expanded=True):
                             col1, col2 = st.columns(2)
                             with col1:
-                                tester = st.text_input("Tester responsável:")
-                                client = st.text_input("Cliente:")
-                                story_number = st.text_input("Número da história:")
+                                responsavel = st.text_input("Responsável pelo Teste:")
+                                cliente = st.text_input("Cliente:")
+                                data_teste = st.date_input("Data do Teste:")
                             with col2:
-                                test_base = st.text_input("Base de testes:")
-                                files_used = st.text_input("Arquivos utilizados:")
+                                numero_historia = st.text_input("Número da História:")
+                                base_testes = st.text_input("Base de Testes:")
+                                arquivos_utilizados = st.text_input("Arquivos Utilizados:")
                         
                         user_data = {
-                            'tester': tester,
-                            'client': client,
-                            'story_number': story_number,
-                            'test_base': test_base,
-                            'files_used': files_used
+                            'responsavel': responsavel,
+                            'cliente': cliente,
+                            'data_teste': data_teste.strftime('%Y-%m-%d') if data_teste else '',
+                            'numero_historia': numero_historia,
+                            'base_testes': base_testes,
+                            'arquivos_utilizados': arquivos_utilizados
                         }
                         
                         html_report = generate_html_report(test_items, uploaded_file.name, user_data=user_data)
