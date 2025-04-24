@@ -24,18 +24,16 @@ def extract_text(uploaded_file):
         return None
 
 def generate_html_report(test_items, filename, initial_checks=None, user_data=None):
-    """Gera um relatório HTML interativo com o novo design"""
+    """Gera um relatório HTML interativo"""
     if initial_checks is None:
         initial_checks = [False] * len(test_items)
     
     if user_data is None:
         user_data = {
-            'responsavel': '',
-            'cliente': '',
-            'numero_historia': '',
-            'base_testes': '',
-            'arquivos_utilizados': '',
-            'data_teste': datetime.now().strftime('%Y-%m-%d')
+            'tester': '',
+            'requester': '',
+            'environment': '',
+            'directory': ''
         }
     
     html_content = f"""
@@ -44,307 +42,141 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Testes - {filename}</title>
+    <title>Relatório de Testes - {filename}</title>
     <style>
-        :root {{
-            --primary-color: #0054a6;
-            --secondary-color: #00a0e3;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-            --border-color: #dee2e6;
-        }}
-        
         body {{
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
+            font-family: Arial, sans-serif;
             line-height: 1.6;
-            padding: 20px;
+            margin: 20px;
+            color: #333;
         }}
-        
-        .container {{
-            max-width: 1000px;
-            margin: 0 auto;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-        }}
-        
-        header {{
+        .header {{
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid #eee;
         }}
-        
-        h1 {{
-            color: var(--primary-color);
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-        }}
-        
-        .info-section {{
-            margin-bottom: 25px;
-            padding: 20px;
-            background-color: var(--light-color);
+        .test-info {{
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f0f8ff;
             border-radius: 5px;
         }}
-        
-        .form-row {{
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }}
-        
-        .form-group {{
-            flex: 1 1 200px;
-            min-width: 0;
-            margin-bottom: 10px;
-        }}
-        
-        .form-group-small {{
-            flex: 0 1 150px;
-            min-width: 0;
-        }}
-        
-        .form-group-medium {{
-            flex: 0 1 250px;
-            min-width: 0;
-        }}
-        
-        label {{
+        .test-info label {{
             display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: #555;
+            margin-top: 10px;
+            font-weight: bold;
         }}
-        
-        input[type="text"], 
-        input[type="date"] {{
+        .test-info input {{
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border-color);
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 0.95rem;
             box-sizing: border-box;
         }}
-        
-        .section-title {{
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--secondary-color);
-            padding-bottom: 5px;
-            margin: 25px 0 15px;
-        }}
-        
-        .checklist-item {{
-            display: flex;
-            align-items: flex-start;
+        .test-item {{
             margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            background-color: white;
-        }}
-        
-        .checklist-item:hover {{
-            background-color: #f8f9fa;
-        }}
-        
-        .checklist-item input[type="checkbox"] {{
-            margin-right: 10px;
-            margin-top: 3px;
-            min-width: 18px;
-            height: 18px;
-        }}
-        
-        .checklist-item label {{
-            font-weight: normal;
-            cursor: pointer;
-            flex-grow: 1;
-        }}
-        
-        .status-bar {{
-            margin: 20px 0;
-            padding: 10px;
-            border-radius: 4px;
-            text-align: center;
-            font-weight: 600;
-        }}
-        
-        .status-incomplete {{
-            background-color: #fff3cd;
-            color: #856404;
-        }}
-        
-        .status-complete {{
-            background-color: #d4edda;
-            color: #155724;
-        }}
-        
-        .buttons {{
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 20px;
+            align-items: center;
         }}
-        
-        button {{
+        .test-item input {{
+            margin-right: 15px;
+            transform: scale(1.5);
+        }}
+        .footer {{
+            margin-top: 30px;
+            text-align: center;
+            color: #777;
+            font-size: 0.9em;
+        }}
+        .progress-container {{
+            margin: 20px 0;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            height: 20px;
+        }}
+        .progress-bar {{
+            height: 100%;
+            border-radius: 10px;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s;
+        }}
+        .log-container {{
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }}
+        .log-entry {{
+            margin: 5px 0;
+            padding: 5px;
+            font-size: 0.9em;
+        }}
+        .button {{
             padding: 10px 15px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s;
-        }}
-        
-        .btn-primary {{
-            background-color: var(--primary-color);
-            color: white;
-        }}
-        
-        .btn-success {{
-            background-color: var(--success-color);
-            color: white;
-        }}
-        
-        .btn-danger {{
-            background-color: var(--danger-color);
-            color: white;
-        }}
-        
-        .btn-warning {{
-            background-color: var(--warning-color);
-            color: #212529;
-        }}
-        
-        .btn-secondary {{
-            background-color: var(--dark-color);
-            color: white;
-        }}
-        
-        .log-container {{
-            margin-top: 30px;
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 10px;
-            background-color: #f8f9fa;
-        }}
-        
-        .log-entry {{
-            margin-bottom: 5px;
-            padding: 5px;
-            border-bottom: 1px solid #eee;
-            font-size: 0.9rem;
-        }}
-        
-        footer {{
-            margin-top: 30px;
-            text-align: center;
-            color: #6c757d;
-            font-size: 0.9rem;
-        }}
-        
-        @media (max-width: 768px) {{
-            .container {{
-                padding: 15px;
-            }}
-            
-            .form-row {{
-                flex-direction: column;
-                gap: 15px;
-            }}
-            
-            .form-group, .form-group-small, .form-group-medium {{
-                flex: 1;
-                min-width: 100%;
-            }}
-            
-            .buttons {{
-                flex-direction: column;
-            }}
-            
-            button {{
-                width: 100%;
-            }}
         }}
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Controle de Testes</h1>
-            <p>Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
-            <p>Arquivo original: {filename}</p>
-        </header>
+    <div class="header">
+        <h1>Relatório de Testes</h1>
+        <p>Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+        <p>Arquivo original: {filename}</p>
+    </div>
+
+    <div class="test-info">
+        <h2>Informações do Teste</h2>
+        <label for="tester">Tester responsável:</label>
+        <input type="text" id="tester" value="{user_data['tester']}">
         
-        <div class="info-section">
-            <div class="form-row">
-                <div class="form-group-small">
-                    <label for="responsavel">Responsável:</label>
-                    <input type="text" id="responsavel" value="{user_data['responsavel']}" maxlength="15">
-                </div>
-                <div class="form-group-small">
-                    <label for="data-teste">Data do Teste:</label>
-                    <input type="date" id="data-teste" value="{user_data['data_teste']}">
-                </div>
-                <div class="form-group-medium">
-                    <label for="cliente">Cliente:</label>
-                    <input type="text" id="cliente" value="{user_data['cliente']}" maxlength="20">
-                </div>
-                <div class="form-group-small">
-                    <label for="numero-historia">Nº História:</label>
-                    <input type="text" id="numero-historia" value="{user_data['numero_historia']}">
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="base-testes">Base de Testes:</label>
-                    <input type="text" id="base-testes" value="{user_data['base_testes']}">
-                </div>
-                <div class="form-group">
-                    <label for="arquivos-utilizados">Arquivos Utilizados:</label>
-                    <input type="text" id="arquivos-utilizados" value="{user_data['arquivos_utilizados']}">
-                </div>
-            </div>
-        </div>
+        <label for="requester">Solicitante:</label>
+        <input type="text" id="requester" value="{user_data['requester']}">
         
-        <h2 class="section-title">Checklist de Validação</h2>
+        <label for="environment">Ambiente utilizado:</label>
+        <input type="text" id="environment" value="{user_data['environment']}">
         
-        <div id="testItemsContainer">
-            {''.join([
-                f'<div class="checklist-item"><input type="checkbox" id="item{i}" {"checked" if initial_checks[i] else ""}>'
-                f'<label for="item{i}">{item.replace("[ ]", "").replace("[x]", "")}</label></div>'
-                for i, item in enumerate(test_items)
-            ])}
-        </div>
-        
-        <div class="status-bar status-incomplete" id="status-bar">
-            0 de {len(test_items)} itens verificados (0%)
-        </div>
-        
-        <div class="buttons">
-            <button class="btn-primary" onclick="saveProgress()">Salvar Progresso</button>
-            <button class="btn-success" onclick="selectAllTests()">Marcar Todos</button>
-            <button class="btn-danger" onclick="resetTests()">Reiniciar Testes</button>
-            <button class="btn-warning" onclick="exportReport()">Relatório de Testes</button>
-            <button class="btn-secondary" onclick="exportPending()">Ajustes Pendentes</button>
-        </div>
-        
-        <h3 class="section-title">Log de Alterações</h3>
-        <div class="log-container" id="logEntries"></div>
-        
-        <footer>
-            <p>© {datetime.now().strftime('%Y')} - Relatório gerado automaticamente</p>
-        </footer>
+        <label for="directory">Diretório dos arquivos:</label>
+        <input type="text" id="directory" value="{user_data['directory']}">
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <span id="progressText">0% Concluído (0/{len(test_items)})</span>
+    </div>
+
+    <h2>Itens de Teste</h2>
+    <div id="testItemsContainer">
+        {''.join([
+            f'<div class="test-item"><input type="checkbox" id="item{i}" {"checked" if initial_checks[i] else ""}>'
+            f'<label for="item{i}">{item.replace("[ ]", "").replace("[x]", "")}</label></div>'
+            for i, item in enumerate(test_items)
+        ])}
+    </div>
+
+    <div class="log-container">
+        <h3>Log de Alterações</h3>
+        <div id="logEntries"></div>
+        <button class="button" onclick="saveProgress()">Salvar Progresso</button>
+        <button class="button" onclick="exportReport()">Exportar Relatório</button>
+        <button class="button" onclick="clearLog()">Limpar Log</button>
+        <button class="button" onclick="resetTests()">Reiniciar Testes</button>
+    </div>
+
+    <div class="footer">
+        <p>Relatório gerado automaticamente</p>
     </div>
 
     <script>
@@ -353,21 +185,13 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
         let testState = {json.dumps(initial_checks)};
         let logEntries = [];
 
-        // Atualiza a barra de status
-        function updateStatusBar() {{
+        // Atualiza progresso
+        function updateProgress() {{
             const checkedCount = testState.filter(x => x).length;
             const percentage = Math.round((checkedCount / totalItems) * 100);
-            const statusBar = document.getElementById('status-bar');
-            
-            statusBar.textContent = `${{checkedCount}} de ${{totalItems}} itens verificados (${{percentage}}%)`;
-            
-            if (checkedCount === totalItems) {{
-                statusBar.classList.remove('status-incomplete');
-                statusBar.classList.add('status-complete');
-            }} else {{
-                statusBar.classList.remove('status-complete');
-                statusBar.classList.add('status-incomplete');
-            }}
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = 
+                percentage + '% Concluído (' + checkedCount + '/' + totalItems + ')';
         }}
 
         // Adiciona entrada no log
@@ -381,70 +205,43 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             entryElement.className = 'log-entry';
             entryElement.textContent = logEntries[logEntries.length - 1];
             logContainer.appendChild(entryElement);
-            logContainer.scrollTop = logContainer.scrollHeight;
         }}
 
         // Salva progresso no localStorage
         function saveProgress() {{
             const userData = {{
-                responsavel: document.getElementById('responsavel').value,
-                data_teste: document.getElementById('data-teste').value,
-                cliente: document.getElementById('cliente').value,
-                numero_historia: document.getElementById('numero-historia').value,
-                base_testes: document.getElementById('base-testes').value,
-                arquivos_utilizados: document.getElementById('arquivos-utilizados').value
+                tester: document.getElementById('tester').value,
+                requester: document.getElementById('requester').value,
+                environment: document.getElementById('environment').value,
+                directory: document.getElementById('directory').value
             }};
-            
-            // Valida campos obrigatórios
-            if (!userData.responsavel || !userData.cliente || !userData.numero_historia || 
-                !userData.base_testes || !userData.arquivos_utilizados) {{
-                alert('Por favor, preencha todos os campos antes de salvar!');
-                return;
-            }}
             
             localStorage.setItem('testProgress', JSON.stringify(testState));
             localStorage.setItem('testLog', JSON.stringify(logEntries));
             localStorage.setItem('userData', JSON.stringify(userData));
-            
-            addLogEntry('Progresso salvo com sucesso');
+            addLogEntry('Progresso salvo');
             alert('Progresso salvo com sucesso!');
         }}
 
-        // Marca todos os itens
-        function selectAllTests() {{
-            testState = Array(totalItems).fill(true);
-            document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
-                cb.checked = true;
-            }});
-            updateStatusBar();
-            addLogEntry('Todos os itens foram marcados');
-        }}
-
-        // Exporta relatório completo
+        // Exporta relatório
         function exportReport() {{
             const userData = {{
-                responsavel: document.getElementById('responsavel').value,
-                data_teste: document.getElementById('data-teste').value,
-                cliente: document.getElementById('cliente').value,
-                numero_historia: document.getElementById('numero-historia').value,
-                base_testes: document.getElementById('base-testes').value,
-                arquivos_utilizados: document.getElementById('arquivos-utilizados').value
+                tester: document.getElementById('tester').value,
+                requester: document.getElementById('requester').value,
+                environment: document.getElementById('environment').value,
+                directory: document.getElementById('directory').value
             }};
-            
-            const checkedCount = testState.filter(x => x).length;
-            const percentage = Math.round((checkedCount / totalItems) * 100);
             
             const report = {{
                 metadata: {{
                     title: 'Relatório de Testes',
                     date: new Date().toLocaleString('pt-BR'),
                     originalFile: '{filename}',
-                    progress: `${{percentage}}% (${{checkedCount}}/${{totalItems}})`,
-                    responsavel: userData.responsavel,
-                    cliente: userData.cliente,
-                    numero_historia: userData.numero_historia,
-                    base_testes: userData.base_testes,
-                    arquivos_utilizados: userData.arquivos_utilizados
+                    progress: (testState.filter(x => x).length / totalItems * 100).toFixed(2) + '%',
+                    tester: userData.tester,
+                    requester: userData.requester,
+                    environment: userData.environment,
+                    directory: userData.directory
                 }},
                 testItems: {json.dumps([item.replace("[ ]", "").replace("[x]", "") for item in test_items])},
                 log: logEntries
@@ -456,34 +253,16 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             a.href = url;
             a.download = 'relatorio_testes_{filename.split('.')[0]}.json';
             a.click();
-            
-            addLogEntry('Relatório de testes exportado');
+            addLogEntry('Relatório exportado');
         }}
 
-        // Exporta itens pendentes
-        function exportPending() {{
-            const pendingItems = testState.map((checked, i) => !checked ? testItems[i] : null).filter(item => item !== null);
-            
-            if (pendingItems.length === 0) {{
-                alert('Não há itens pendentes!');
-                return;
+        // Limpa o log
+        function clearLog() {{
+            if (confirm('Tem certeza que deseja limpar o log?')) {{
+                logEntries = [];
+                document.getElementById('logEntries').innerHTML = '';
+                addLogEntry('Log limpo');
             }}
-            
-            const report = {{
-                pendingItems: pendingItems,
-                totalPending: pendingItems.length,
-                totalItems: totalItems,
-                date: new Date().toLocaleString('pt-BR')
-            }};
-            
-            const blob = new Blob([JSON.stringify(report, null, 2)], {{ type: 'application/json' }});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'ajustes_pendentes_{filename.split('.')[0]}.json';
-            a.click();
-            
-            addLogEntry('Ajustes pendentes exportados');
         }}
 
         // Reinicia todos os testes
@@ -493,8 +272,8 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
                 document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
                     cb.checked = false;
                 }});
-                updateStatusBar();
-                addLogEntry('Todos os testes foram reiniciados');
+                updateProgress();
+                addLogEntry('Testes reiniciados');
             }}
         }}
 
@@ -513,12 +292,10 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             
             if (savedUserData) {{
                 const userData = JSON.parse(savedUserData);
-                document.getElementById('responsavel').value = userData.responsavel || '';
-                document.getElementById('data-teste').value = userData.data_teste || '{datetime.now().strftime('%Y-%m-%d')}';
-                document.getElementById('cliente').value = userData.cliente || '';
-                document.getElementById('numero-historia').value = userData.numero_historia || '';
-                document.getElementById('base-testes').value = userData.base_testes || '';
-                document.getElementById('arquivos-utilizados').value = userData.arquivos_utilizados || '';
+                document.getElementById('tester').value = userData.tester || '';
+                document.getElementById('requester').value = userData.requester || '';
+                document.getElementById('environment').value = userData.environment || '';
+                document.getElementById('directory').value = userData.directory || '';
             }}
             
             if (savedLog) {{
@@ -532,30 +309,21 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
                 }});
             }}
             
-            updateStatusBar();
+            updateProgress();
         }}
 
         // Configura eventos
         document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
             cb.addEventListener('change', function() {{
                 testState[i] = this.checked;
-                updateStatusBar();
-                const action = this.checked ? 'marcou' : 'desmarcou';
-                const itemText = this.nextElementSibling.textContent.trim();
-                addLogEntry(`${{action}} o item: ${{itemText}}`);
+                updateProgress();
+                addLogEntry(`Item ${{i+1}} - ${{this.checked ? 'marcado' : 'desmarcado'}}`);
             }});
         }});
 
         // Inicializa
         window.onload = function() {{
             loadProgress();
-            
-            // Adiciona data atual se não estiver definida
-            if (!document.getElementById('data-teste').value) {{
-                document.getElementById('data-teste').value = '{datetime.now().strftime('%Y-%m-%d')}';
-            }}
-            
-            addLogEntry('Documento carregado');
         }};
     </script>
 </body>
@@ -564,9 +332,9 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
     return html_content
 
 def main():
-    st.set_page_config(page_title="Controle de Testes", layout="centered")
+    st.set_page_config(page_title="Gerador de Testes Interativo", layout="centered")
     
-    st.title("📋 Controle de Testes")
+    st.title("📋 Gerador de Testes Interativo")
     st.markdown("""
     ### Como usar:
     1. Faça upload de um arquivo DOCX ou PDF
@@ -595,24 +363,12 @@ def main():
                     if test_items:
                         # Coleta informações adicionais do usuário
                         with st.expander("Informações do Teste", expanded=True):
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                responsavel = st.text_input("Responsável:", max_chars=15)
-                                cliente = st.text_input("Cliente:", max_chars=20)
-                                numero_historia = st.text_input("Nº História:")
-                            with col2:
-                                data_teste = st.date_input("Data do Teste:")
-                                base_testes = st.text_input("Base de Testes:")
-                                arquivos_utilizados = st.text_input("Arquivos Utilizados:")
-                        
-                        user_data = {
-                            'responsavel': responsavel,
-                            'cliente': cliente,
-                            'data_teste': data_teste.strftime('%Y-%m-%d') if data_teste else '',
-                            'numero_historia': numero_historia,
-                            'base_testes': base_testes,
-                            'arquivos_utilizados': arquivos_utilizados
-                        }
+                            user_data = {
+                                'tester': st.text_input("Tester responsável:"),
+                                'requester': st.text_input("Solicitante:"),
+                                'environment': st.text_input("Ambiente utilizado:"),
+                                'directory': st.text_input("Diretório dos arquivos:")
+                            }
                         
                         html_report = generate_html_report(test_items, uploaded_file.name, user_data=user_data)
                         
@@ -620,9 +376,9 @@ def main():
                         st.balloons()
                         
                         st.download_button(
-                            label="⬇️ Baixar Controle de Testes",
+                            label="⬇️ Baixar Relatório HTML Interativo",
                             data=html_report,
-                            file_name=f"controle_testes_{uploaded_file.name.split('.')[0]}.html",
+                            file_name=f"relatorio_interativo_{uploaded_file.name.split('.')[0]}.html",
                             mime="text/html"
                         )
                     else:
