@@ -289,7 +289,7 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             <div class="form-row">
                 <div class="form-group-small">
                     <label for="responsavel">Responsável:</label>
-                    <input type="text" id="responsavel" value="{user_data['responsavel']}" maxlength="15" placeholder="Nome do responsável">
+                    <input type="text" id="responsavel" value="{user_data['responsavel']}" maxlength="15">
                 </div>
                 <div class="form-group-small">
                     <label for="data-teste">Data do Teste:</label>
@@ -297,25 +297,22 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
                 </div>
                 <div class="form-group-medium">
                     <label for="cliente">Cliente:</label>
-                    <input type="text" id="cliente" value="{user_data['cliente']}" maxlength="20" placeholder="Nome do cliente">
+                    <input type="text" id="cliente" value="{user_data['cliente']}" maxlength="20">
                 </div>
-            </div>
-            
-            <div class="form-row">
                 <div class="form-group-small">
                     <label for="numero-historia">Nº História:</label>
-                    <input type="text" id="numero-historia" value="{user_data['numero_historia']}" placeholder="Número da história">
-                </div>
-                <div class="form-group">
-                    <label for="base-testes">Base de Testes:</label>
-                    <input type="text" id="base-testes" value="{user_data['base_testes']}" placeholder="Base utilizada para testes">
+                    <input type="text" id="numero-historia" value="{user_data['numero_historia']}">
                 </div>
             </div>
             
             <div class="form-row">
                 <div class="form-group">
+                    <label for="base-testes">Base de Testes:</label>
+                    <input type="text" id="base-testes" value="{user_data['base_testes']}">
+                </div>
+                <div class="form-group">
                     <label for="arquivos-utilizados">Arquivos Utilizados:</label>
-                    <input type="text" id="arquivos-utilizados" value="{user_data['arquivos_utilizados']}" placeholder="Arquivos utilizados nos testes">
+                    <input type="text" id="arquivos-utilizados" value="{user_data['arquivos_utilizados']}">
                 </div>
             </div>
         </div>
@@ -602,9 +599,9 @@ def main():
                             with col1:
                                 responsavel = st.text_input("Responsável:", max_chars=15)
                                 cliente = st.text_input("Cliente:", max_chars=20)
-                                data_teste = st.date_input("Data do Teste:")
-                            with col2:
                                 numero_historia = st.text_input("Nº História:")
+                            with col2:
+                                data_teste = st.date_input("Data do Teste:")
                                 base_testes = st.text_input("Base de Testes:")
                                 arquivos_utilizados = st.text_input("Arquivos Utilizados:")
                         
