@@ -25,39 +25,64 @@ def extract_text(uploaded_file):
         return None
 
 def generate_pdf_report(test_items, filename, user_data, completed_items=True):
-    """Gera um relatório PDF com os itens marcados ou pendentes"""
+    """Gera um relatório PDF com os itens marcados ou pendentes - Versão reformatada"""
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
     
-    # Cabeçalho
+    # Cabeçalho com estilo profissional
     pdf.set_font("Arial", 'B', 16)
     pdf.cell(200, 10, txt="Relatório de Testes" if completed_items else "Ajustes Pendentes", ln=1, align='C')
     pdf.set_font("Arial", size=12)
-    
-    # Informações do teste
-    pdf.cell(200, 10, txt=f"Arquivo original: {filename}", ln=1)
-    pdf.cell(200, 10, txt=f"Responsável: {user_data['responsavel']}", ln=1)
-    pdf.cell(200, 10, txt=f"Cliente: {user_data['cliente']}", ln=1)
-    pdf.cell(200, 10, txt=f"Nº História: {user_data['numero_historia']}", ln=1)
-    pdf.cell(200, 10, txt=f"Data do Teste: {user_data['data_teste']}", ln=1)
+    pdf.line(10, 20, 200, 20)
     pdf.ln(10)
     
-    # Título da seção
+    # Informações do teste formatadas
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(40, 10, txt="Arquivo original:", ln=0)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(0, 10, txt=filename, ln=1)
+    
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(40, 10, txt="Responsável:", ln=0)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(0, 10, txt=user_data['responsavel'], ln=1)
+    
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(40, 10, txt="Cliente:", ln=0)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(0, 10, txt=user_data['cliente'], ln=1)
+    
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(40, 10, txt="Nº História:", ln=0)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(0, 10, txt=user_data['numero_historia'], ln=1)
+    
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(40, 10, txt="Data do Teste:", ln=0)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(0, 10, txt=user_data['data_teste'], ln=1)
+    pdf.ln(15)
+    
+    # Título da seção com destaque
     pdf.set_font("Arial", 'B', 14)
     title = "TESTES VALIDADOS" if completed_items else "AJUSTES PENDENTES"
     pdf.cell(200, 10, txt=title, ln=1, align='C')
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.set_font("Arial", size=12)
     pdf.ln(10)
     
-    # Itens do relatório
+    # Itens do relatório com numeração e formatação
     for idx, item in enumerate(test_items, 1):
         # Remove marcadores [ ] ou [x] se existirem
         clean_item = item.replace("[ ]", "").replace("[x]", "").strip()
-        pdf.multi_cell(0, 8, txt=f"{idx}. {clean_item}")
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(10, 8, txt=f"{idx}.", ln=0)
+        pdf.set_font("Arial", '', 12)
+        pdf.multi_cell(0, 8, txt=clean_item)
         pdf.ln(5)
     
-    # Rodapé
+    # Rodapé com data de geração
     pdf.ln(15)
     pdf.set_font("Arial", 'I', 10)
     pdf.cell(0, 10, txt=f"Relatório gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=1, align='C')
@@ -146,7 +171,7 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
         // Inicializa variáveis
         const totalItems = {len(test_items)};
         let testState = {json.dumps(initial_checks)};
-        let logEntries = [];
+        let logEntries = ['Documento carregado'];
 
         // Atualiza a barra de status
         function updateStatusBar() {{
@@ -198,7 +223,6 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             }}
             
             localStorage.setItem('testProgress', JSON.stringify(testState));
-            localStorage.setItem('testLog', JSON.stringify(logEntries));
             localStorage.setItem('userData', JSON.stringify(userData));
             
             addLogEntry('Progresso salvo com sucesso');
@@ -435,13 +459,16 @@ def main():
                             mime="text/html"
                         )
                         
-                        # Botões para gerar PDFs diretamente
+                        # Botões para gerar PDFs diretamente - Reformulados em colunas
+                        st.markdown("### Gerar Relatórios em PDF")
                         col1, col2 = st.columns(2)
+                        
                         with col1:
-                            if st.button("📄 Gerar Relatório de Testes (PDF)"):
+                            if st.button("📄 Relatório Completo (Testes Validados)", 
+                                       help="Gera PDF com todos os itens marcados como validados"):
                                 completed_items = [
                                     item.replace("[ ]", "").replace("[x]", "") 
-                                    for i, item in enumerate(test_items) 
+                                    for item in test_items 
                                 ]
                                 pdf_report = generate_pdf_report(
                                     completed_items,
@@ -457,10 +484,11 @@ def main():
                                 )
                         
                         with col2:
-                            if st.button("⚠️ Gerar Ajustes Pendentes (PDF)"):
+                            if st.button("⚠️ Ajustes Pendentes", 
+                                       help="Gera PDF com itens não marcados (pendentes)"):
                                 pending_items = [
                                     item.replace("[ ]", "").replace("[x]", "") 
-                                    for i, item in enumerate(test_items) 
+                                    for item in test_items 
                                 ]
                                 pdf_report = generate_pdf_report(
                                     pending_items,
