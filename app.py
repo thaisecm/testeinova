@@ -653,109 +653,104 @@ def main():
     4. Abra o HTML em qualquer navegador para usar as funcionalidades
     """)
     
-    uploaded_file = st.file_uploader(
-        "Arraste e solte seu arquivo aqui (DOCX ou PDF)",
-        type=['docx', 'pdf'],
-        accept_multiple_files=False,
-        help="Tamanho máximo: 200MB"
-    )
-    
-    if uploaded_file:
-        with st.spinner("Processando arquivo..."):
-            try:
-                text_content = extract_text(uploaded_file)
-                
-                if text_content:
-                    # Processa linhas relevantes
-                    lines = [line.strip() for line in text_content.split('\n') if line.strip()]
-                    test_items = [f"- [ ] {line[:250]}" for line in lines if len(line.split()) > 3][:50]
-                    
-                    if test_items:
-                        # Coleta informações adicionais do usuário
-                        with st.expander("Informações do Teste", expanded=True):
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                responsavel = st.text_input("Responsável:", max_chars=15)
-                                cliente = st.text_input("Cliente:", max_chars=20)
-                                numero_historia = st.text_input("Nº História:")
-                            with col2:
-                                data_teste = st.date_input("Data do Teste:")
-                                base_testes = st.text_input("Base de Testes:")
-                                arquivos_utilizados = st.text_input("Arquivos Utilizados:")
-                        
-                        user_data = {
-                            'responsavel': responsavel,
-                            'cliente': cliente,
-                            'data_teste': data_teste.strftime('%Y-%m-%d') if data_teste else '',
-                            'numero_historia': numero_historia,
-                            'base_testes': base_testes,
-                            'arquivos_utilizados': arquivos_utilizados
-                        }
-                        
-                        html_report = generate_html_report(test_items, uploaded_file.name, user_data=user_data)
-                        
-                        st.success("✅ Relatório interativo gerado com sucesso!")
-                        st.balloons()
-                        
-                        # Botão para download do HTML
-                        st.download_button(
-                            label="⬇️ Baixar Controle de Testes (HTML)",
-                            data=html_report,
-                            file_name=f"controle_testes_{uploaded_file.name.split('.')[0]}.html",
-                            mime="text/html"
-                        )
-                        
-                        # Botões para gerar PDFs diretamente
-                        st.markdown("### Gerar Relatórios em PDF")
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            if st.button("📄 Relatório Completo (Testes Validados)", 
-                                       help="Gera PDF com todos os itens marcados como validados"):
-                                completed_items = [
-                                    item.replace("[ ]", "").replace("[x]", "") 
-                                    for item in test_items 
-                                ]
-                                pdf_report = generate_pdf_report(
-                                    completed_items,
-                                    uploaded_file.name,
-                                    user_data,
-                                    completed_items=True
-                                )
-                                st.download_button(
-                                    label="⬇️ Baixar Relatório Completo",
-                                    data=pdf_report,
-                                    file_name=f"relatorio_testes_{uploaded_file.name.split('.')[0]}.pdf",
-                                    mime="application/pdf"
-                                )
-                        
-                        with col2:
-                            if st.button("⚠️ Ajustes Pendentes", 
-                                       help="Gera PDF com itens não marcados (pendentes)"):
-                                pending_items = [
-                                    item.replace("[ ]", "").replace("[x]", "") 
-                                    for item in test_items 
-                                ]
-                                pdf_report = generate_pdf_report(
-                                    pending_items,
-                                    uploaded_file.name,
-                                    user_data,
-                                    completed_items=False
-                                )
-                                st.download_button(
-                                    label="⬇️ Baixar Ajustes Pendentes",
-                                    data=pdf_report,
-                                    file_name=f"ajustes_pendentes_{uploaded_file.name.split('.')[0]}.pdf",
-                                    mime="application/pdf"
-                                )
-                            
-                    else:
-                        st.warning("Não foram identificados itens de teste no documento.")
-                else:
-                    st.error("Não foi possível extrair conteúdo do arquivo")
-            
-            except Exception as e:
-                st.error(f"Erro durante o processamento: {str(e)}")
+   # app.py - Versão corrigida para o erro de PDF
 
-if __name__ == "__main__":
-    main()
+def generate_pdf_report(test_items, filename, user_data, completed_items=True):
+    """Gera um relatório PDF com os itens marcados ou pendentes - Versão corrigida"""
+    try:
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        
+        # Cabeçalho
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(200, 10, txt="Relatório de Testes" if completed_items else "Ajustes Pendentes", ln=1, align='C')
+        pdf.set_font("Arial", size=12)
+        pdf.line(10, 20, 200, 20)
+        pdf.ln(10)
+        
+        # [...] (restante do código da função generate_pdf_report permanece igual)
+        
+        # Gera o PDF em memória com tratamento de erro
+        try:
+            pdf_output = pdf.output(dest='S').encode('latin1')
+            return pdf_output
+        except Exception as e:
+            st.error(f"Erro ao codificar PDF: {str(e)}")
+            return None
+            
+    except Exception as e:
+        st.error(f"Erro ao gerar PDF: {str(e)}")
+        return None
+
+def main():
+    # [...] (código anterior permanece igual até a parte dos botões de PDF)
+    
+    # Botões para gerar PDFs diretamente - VERSÃO CORRIGIDA
+    st.markdown("### Gerar Relatórios em PDF")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("📄 Relatório Completo (Testes Validados)", 
+                   help="Gera PDF com todos os itens marcados como validados",
+                   key="btn_completed_report"):
+            try:
+                completed_items = [
+                    item.replace("[ ]", "").replace("[x]", "") 
+                    for item in test_items 
+                ]
+                pdf_report = generate_pdf_report(
+                    completed_items,
+                    uploaded_file.name,
+                    user_data,
+                    completed_items=True
+                )
+                
+                if pdf_report is None:
+                    st.error("Falha ao gerar o relatório PDF. Verifique os dados e tente novamente.")
+                    return
+                
+                # Usando um container para evitar recarregamento da página
+                with st.container():
+                    st.download_button(
+                        label="⬇️ Baixar Relatório Completo",
+                        data=pdf_report,
+                        file_name=f"relatorio_testes_{uploaded_file.name.split('.')[0]}.pdf",
+                        mime="application/pdf",
+                        key=f"completed_{datetime.now().timestamp()}"
+                    )
+            except Exception as e:
+                st.error(f"Erro inesperado: {str(e)}")
+    
+    with col2:
+        if st.button("⚠️ Ajustes Pendentes", 
+                   help="Gera PDF com itens não marcados (pendentes)",
+                   key="btn_pending_report"):
+            try:
+                pending_items = [
+                    item.replace("[ ]", "").replace("[x]", "") 
+                    for item in test_items 
+                ]
+                pdf_report = generate_pdf_report(
+                    pending_items,
+                    uploaded_file.name,
+                    user_data,
+                    completed_items=False
+                )
+                
+                if pdf_report is None:
+                    st.error("Falha ao gerar o relatório de ajustes pendentes. Verifique os dados e tente novamente.")
+                    return
+                
+                with st.container():
+                    st.download_button(
+                        label="⬇️ Baixar Ajustes Pendentes",
+                        data=pdf_report,
+                        file_name=f"ajustes_pendentes_{uploaded_file.name.split('.')[0]}.pdf",
+                        mime="application/pdf",
+                        key=f"pending_{datetime.now().timestamp()}"
+                    )
+            except Exception as e:
+                st.error(f"Erro inesperado: {str(e)}")
+
+    # [...] (restante do código permanece igual)
