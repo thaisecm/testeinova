@@ -86,6 +86,16 @@ def generate_pdf_report(test_items, filename, user_data, completed_items=True):
     pdf.cell(40, 10, txt="Data do Teste:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=user_data['data_teste'], ln=1)
+    
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(40, 10, txt="Base de Testes:", ln=0)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(0, 10, txt=user_data['base_testes'], ln=1)
+    
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(40, 10, txt="Arquivos Utilizados:", ln=0)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(0, 10, txt=user_data['arquivos_utilizados'], ln=1)
     pdf.ln(15)
     
     # Título da seção
