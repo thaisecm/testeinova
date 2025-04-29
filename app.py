@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 from fpdf import FPDF
 
-# Inicializa as variáveis de sessão se não existirem
+# Inicializa as variáveis de sessão
 if 'user_data' not in st.session_state:
     st.session_state.user_data = {
         'responsavel': '',
@@ -28,11 +28,10 @@ def reset_user_data():
         'arquivos_utilizados': '',
         'data_teste': datetime.now().strftime('%Y-%m-%d')
     }
-    # Flag para limpar o localStorage no HTML
     st.session_state.clear_local_storage = True
 
 def extract_text(uploaded_file):
-    """Extrai texto de arquivos DOCX ou PDF com tratamento de erros"""
+    """Extrai texto de arquivos DOCX ou PDF"""
     try:
         if uploaded_file.name.endswith('.docx'):
             doc = Document(BytesIO(uploaded_file.getvalue()))
@@ -61,50 +60,39 @@ def generate_pdf_report(test_items, filename, user_data, completed_items=True):
     pdf.line(10, 20, 200, 20)
     pdf.ln(10)
     
-    # Informações do teste (em duas colunas)
-    col_width = 90
-    x_pos = pdf.get_x()
-    y_pos = pdf.get_y()
-    
-    # Coluna 1
+    # Informações do teste
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(col_width, 10, txt="Arquivo original:", ln=0)
+    pdf.cell(40, 10, txt="Arquivo original:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=filename, ln=1)
     
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(col_width, 10, txt="Responsável:", ln=0)
+    pdf.cell(40, 10, txt="Responsável:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=user_data['responsavel'], ln=1)
     
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(col_width, 10, txt="Cliente:", ln=0)
+    pdf.cell(40, 10, txt="Cliente:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=user_data['cliente'], ln=1)
     
-    # Coluna 2
-    pdf.set_xy(x_pos + col_width + 10, y_pos)
-    
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(col_width, 10, txt="Nº História:", ln=0)
+    pdf.cell(40, 10, txt="Nº História:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=user_data['numero_historia'], ln=1)
     
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(col_width, 10, txt="Data do Teste:", ln=0)
+    pdf.cell(40, 10, txt="Data do Teste:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=user_data['data_teste'], ln=1)
     
-    # Volta para a coluna 1 para continuar
-    pdf.set_xy(x_pos, pdf.get_y())
-    
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(col_width, 10, txt="Base de Testes:", ln=0)
+    pdf.cell(40, 10, txt="Base de Testes:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=user_data['base_testes'], ln=1)
     
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(col_width, 10, txt="Arquivos Utilizados:", ln=0)
+    pdf.cell(40, 10, txt="Arquivos Utilizados:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.multi_cell(0, 10, txt=user_data['arquivos_utilizados'])
     
@@ -118,7 +106,7 @@ def generate_pdf_report(test_items, filename, user_data, completed_items=True):
     pdf.set_font("Arial", size=12)
     pdf.ln(10)
     
-    # Itens do relatório com numeração e formatação melhorada
+    # Itens do relatório
     for idx, item in enumerate(test_items, 1):
         clean_item = item.replace("[ ]", "").replace("[x]", "").strip()
         pdf.set_font("Arial", 'B', 12)
@@ -127,7 +115,7 @@ def generate_pdf_report(test_items, filename, user_data, completed_items=True):
         pdf.multi_cell(0, 8, txt=clean_item)
         pdf.ln(5)
     
-    # Rodapé com borda superior
+    # Rodapé
     pdf.ln(10)
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(5)
@@ -137,14 +125,14 @@ def generate_pdf_report(test_items, filename, user_data, completed_items=True):
     return pdf.output(dest='S').encode('latin1')
 
 def generate_html_report(test_items, filename, initial_checks=None, user_data=None):
-    """Gera um relatório HTML interativo com o layout do arquivo fornecido"""
+    """Gera um relatório HTML com o layout especificado"""
     if initial_checks is None:
         initial_checks = [False] * len(test_items)
     
     if user_data is None:
         user_data = st.session_state.user_data
     
-    # Script para limpar o localStorage se necessário
+    # Script para limpar o localStorage
     clear_storage_script = ""
     if hasattr(st.session_state, 'clear_local_storage') and st.session_state.clear_local_storage:
         clear_storage_script = """
@@ -154,22 +142,17 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
         """
         del st.session_state.clear_local_storage
     
-    # Gera a lista de itens HTML
+    # Gera os itens do checklist
     test_items_html = []
     for i, item in enumerate(test_items):
         item_text = item.replace("[ ]", "").replace("[x]", "")
         checked_attr = "checked" if initial_checks[i] else ""
-        item_html = f'''
-        <div class="checklist-item" data-index="{i}">
-            <input type="checkbox" id="item{i}" {checked_attr} onchange="handleCheckboxChange(this, {i})">
+        test_items_html.append(f'''
+        <div class="checklist-item">
+            <input type="checkbox" id="item{i}" {checked_attr}>
             <label for="item{i}">{item_text}</label>
-            <div class="item-buttons">
-                <button class="btn-edit-item" onclick="editItem({i})">✏️</button>
-                <button class="btn-delete-item" onclick="deleteItem({i})">🗑️</button>
-            </div>
         </div>
-        '''
-        test_items_html.append(item_html)
+        ''')
 
     html_content = f"""
 <!DOCTYPE html>
@@ -179,7 +162,6 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Testes - {filename}</title>
     <style>
-        /* Estilos mantidos conforme original */
         :root {{
             --primary-color: #0054a6;
             --secondary-color: #00a0e3;
@@ -208,7 +190,207 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             padding: 25px;
         }}
         
-        /* ... (outros estilos mantidos conforme original) ... */
+        header {{
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }}
+        
+        h1 {{
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }}
+        
+        .info-section {{
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: var(--light-color);
+            border-radius: 5px;
+        }}
+        
+        .form-row {{
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }}
+        
+        .form-group {{
+            flex: 1 1 200px;
+            min-width: 0;
+            margin-bottom: 10px;
+        }}
+        
+        .form-group-small {{
+            flex: 0 1 150px;
+            min-width: 0;
+        }}
+        
+        .form-group-medium {{
+            flex: 0 1 250px;
+            min-width: 0;
+        }}
+        
+        label {{
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #555;
+        }}
+        
+        input[type="text"], 
+        input[type="date"] {{
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }}
+        
+        .section-title {{
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 5px;
+            margin: 25px 0 15px;
+        }}
+        
+        .checklist-item {{
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: white;
+        }}
+        
+        .checklist-item:hover {{
+            background-color: #f8f9fa;
+        }}
+        
+        .checklist-item input[type="checkbox"] {{
+            margin-right: 10px;
+            margin-top: 3px;
+            min-width: 18px;
+            height: 18px;
+        }}
+        
+        .checklist-item label {{
+            font-weight: normal;
+            cursor: pointer;
+            flex-grow: 1;
+        }}
+        
+        .status-bar {{
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: 600;
+        }}
+        
+        .status-incomplete {{
+            background-color: #fff3cd;
+            color: #856404;
+        }}
+        
+        .status-complete {{
+            background-color: #d4edda;
+            color: #155724;
+        }}
+        
+        .buttons {{
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }}
+        
+        button {{
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }}
+        
+        .btn-primary {{
+            background-color: var(--primary-color);
+            color: white;
+        }}
+        
+        .btn-success {{
+            background-color: var(--success-color);
+            color: white;
+        }}
+        
+        .btn-danger {{
+            background-color: var(--danger-color);
+            color: white;
+        }}
+        
+        .btn-warning {{
+            background-color: var(--warning-color);
+            color: #212529;
+        }}
+        
+        .btn-secondary {{
+            background-color: var(--dark-color);
+            color: white;
+        }}
+        
+        .log-container {{
+            margin-top: 30px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }}
+        
+        .log-entry {{
+            margin-bottom: 5px;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }}
+        
+        footer {{
+            margin-top: 30px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }}
+        
+        @media (max-width: 768px) {{
+            .container {{
+                padding: 15px;
+            }}
+            
+            .form-row {{
+                flex-direction: column;
+                gap: 15px;
+            }}
+            
+            .form-group, .form-group-small, .form-group-medium {{
+                flex: 1;
+                min-width: 100%;
+            }}
+            
+            .buttons {{
+                flex-direction: column;
+            }}
+            
+            button {{
+                width: 100%;
+            }}
+        }}
     </style>
 </head>
 <body>
@@ -252,10 +434,7 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             </div>
         </div>
         
-        <div class="section-title-container">
-             <h2 class="section-title">Checklist de Validação</h2>
-             <button class="btn-add-item" onclick="addItem()">+ Adicionar Item</button>
-        </div>
+        <h2 class="section-title">Checklist de Validação</h2>
         
         <div id="testItemsContainer">
             {''.join(test_items_html)}
@@ -282,31 +461,25 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
     </div>
 
     <script>
-        // Variáveis globais
-        let testItemsData = {json.dumps(test_items)};
+        // Inicializa variáveis
         let testState = {json.dumps(initial_checks)};
         let logEntries = ['Documento carregado'];
-        const testItemsContainer = document.getElementById('testItemsContainer');
-        const statusBar = document.getElementById('status-bar');
-        const logContainer = document.getElementById('logEntries');
+        const totalItems = testState.length;
 
         // Atualiza a barra de status
         function updateStatusBar() {{
-            const totalItems = testState.length;
-            if (totalItems === 0) {{
-                statusBar.textContent = 'Nenhum item no checklist';
-                statusBar.className = 'status-bar status-incomplete';
-                return;
-            }}
             const checkedCount = testState.filter(x => x).length;
             const percentage = Math.round((checkedCount / totalItems) * 100);
+            const statusBar = document.getElementById('status-bar');
             
             statusBar.textContent = `${{checkedCount}} de ${{totalItems}} itens verificados (${{percentage}}%)`;
             
             if (checkedCount === totalItems) {{
-                statusBar.className = 'status-bar status-complete';
+                statusBar.classList.remove('status-incomplete');
+                statusBar.classList.add('status-complete');
             }} else {{
-                statusBar.className = 'status-bar status-incomplete';
+                statusBar.classList.remove('status-complete');
+                statusBar.classList.add('status-incomplete');
             }}
         }}
 
@@ -314,12 +487,12 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
         function addLogEntry(action) {{
             const now = new Date();
             const timestamp = now.toLocaleString('pt-BR');
-            const logMessage = `[${{timestamp}}] ${{action}}`;
-            logEntries.push(logMessage);
+            logEntries.push(`[${{timestamp}}] ${{action}}`);
             
+            const logContainer = document.getElementById('logEntries');
             const entryElement = document.createElement('div');
             entryElement.className = 'log-entry';
-            entryElement.textContent = logMessage;
+            entryElement.textContent = logEntries[logEntries.length - 1];
             logContainer.appendChild(entryElement);
             logContainer.scrollTop = logContainer.scrollHeight;
         }}
@@ -342,22 +515,23 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             }}
             
             localStorage.setItem('testProgress', JSON.stringify(testState));
-            localStorage.setItem('testItemsData', JSON.stringify(testItemsData)); 
             localStorage.setItem('userData', JSON.stringify(userData));
-            localStorage.setItem('logEntries', JSON.stringify(logEntries));
             
             addLogEntry('Progresso salvo com sucesso');
             alert('Progresso salvo com sucesso!');
         }}
 
-        // Funções restantes mantidas conforme original...
+        // Marca todos os itens
         function selectAllTests() {{
-            testState = Array(testItemsData.length).fill(true);
-            renderChecklist();
+            testState = Array(totalItems).fill(true);
+            document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
+                cb.checked = true;
+            }});
             updateStatusBar();
             addLogEntry('Todos os itens foram marcados');
         }}
 
+        // Exporta relatório completo em PDF
         function exportReport() {{
             const userData = {{
                 responsavel: document.getElementById('responsavel').value,
@@ -368,7 +542,12 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
                 arquivos_utilizados: document.getElementById('arquivos-utilizados').value
             }};
             
-            const completedItems = testItemsData.filter((item, i) => testState[i]);
+            const completedItems = [];
+            document.querySelectorAll('#testItemsContainer .checklist-item').forEach((item, i) => {{
+                if (testState[i]) {{
+                    completedItems.push(item.querySelector('label').textContent.trim());
+                }}
+            }});
             
             if (completedItems.length === 0) {{
                 alert('Não há itens verificados para exportar!');
@@ -379,6 +558,7 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             addLogEntry('Tentativa de exportar relatório de testes em PDF');
         }}
 
+        // Exporta itens pendentes em PDF
         function exportPending() {{
             const userData = {{
                 responsavel: document.getElementById('responsavel').value,
@@ -389,7 +569,12 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
                 arquivos_utilizados: document.getElementById('arquivos-utilizados').value
             }};
             
-            const pendingItems = testItemsData.filter((item, i) => !testState[i]);
+            const pendingItems = [];
+            document.querySelectorAll('#testItemsContainer .checklist-item').forEach((item, i) => {{
+                if (!testState[i]) {{
+                    pendingItems.push(item.querySelector('label').textContent.trim());
+                }}
+            }});
             
             if (pendingItems.length === 0) {{
                 alert('Não há itens pendentes para exportar!');
@@ -400,142 +585,32 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             addLogEntry('Tentativa de exportar ajustes pendentes em PDF');
         }}
 
+        // Reinicia todos os testes
         function resetTests() {{
-            if (confirm('Tem certeza que deseja reiniciar todos os testes? Isso limpará as marcações e o log.')) {{
-                testState = Array(testItemsData.length).fill(false);
-                logEntries = ['Testes reiniciados'];
-                renderChecklist();
-                renderLog();
+            if (confirm('Tem certeza que deseja reiniciar todos os testes?')) {{
+                testState = Array(totalItems).fill(false);
+                document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
+                    cb.checked = false;
+                }});
                 updateStatusBar();
-                localStorage.removeItem('testProgress');
-                localStorage.removeItem('testItemsData');
-                localStorage.removeItem('logEntries');
+                addLogEntry('Todos os testes foram reiniciados');
             }}
         }}
 
-        function loadProgress() {{
-            const savedState = localStorage.getItem('testProgress');
-            const savedItems = localStorage.getItem('testItemsData');
-            const savedUserData = localStorage.getItem('userData');
-            const savedLog = localStorage.getItem('logEntries');
-
-            if (savedItems) {{
-                testItemsData = JSON.parse(savedItems);
-            }}
-            if (savedState) {{
-                testState = JSON.parse(savedState);
-                if (testState.length !== testItemsData.length) {{
-                     testState = Array(testItemsData.length).fill(false);
-                }}
-            }} else {{
-                 testState = Array(testItemsData.length).fill(false);
-            }}
-            
-            if (savedUserData) {{
-                const userData = JSON.parse(savedUserData);
-                document.getElementById('responsavel').value = userData.responsavel || '';
-                document.getElementById('data-teste').value = userData.data_teste || '{datetime.now().strftime('%Y-%m-%d')}';
-                document.getElementById('cliente').value = userData.cliente || '';
-                document.getElementById('numero-historia').value = userData.numero_historia || '';
-                document.getElementById('base-testes').value = userData.base_testes || '';
-                document.getElementById('arquivos-utilizados').value = userData.arquivos_utilizados || '';
-            }} else {{
-                 document.getElementById('responsavel').value = '{user_data['responsavel']}';
-                 document.getElementById('data-teste').value = '{user_data['data_teste']}';
-                 document.getElementById('cliente').value = '{user_data['cliente']}';
-                 document.getElementById('numero-historia').value = '{user_data['numero_historia']}';
-                 document.getElementById('base-testes').value = '{user_data['base_testes']}';
-                 document.getElementById('arquivos-utilizados').value = '{user_data['arquivos_utilizados']}';
-            }}
-
-            if (savedLog) {{
-                logEntries = JSON.parse(savedLog);
-            }} else {{
-                logEntries = ['Documento carregado / Progresso não encontrado'];
-            }}
-
-            renderChecklist();
-            renderLog();
-            updateStatusBar();
-        }}
-
-        function renderChecklist() {{
-            testItemsContainer.innerHTML = '';
-            testItemsData.forEach((itemText, i) => {{
-                const checked_attr = testState[i] ? "checked" : "";
-                const cleanItemText = itemText.replace(/^-\\s*\\[[ x]\\]\\s*/, '').trim(); 
-                const itemElement = document.createElement('div');
-                itemElement.className = 'checklist-item';
-                itemElement.setAttribute('data-index', i);
-                itemElement.innerHTML = `
-                    <input type="checkbox" id="item${{i}}" ${{checked_attr}} onchange="handleCheckboxChange(this, ${{i}})">
-                    <label for="item${{i}}">${{cleanItemText}}</label>
-                    <div class="item-buttons">
-                        <button class="btn-edit-item" onclick="editItem(${{i}})">✏️</button>
-                        <button class="btn-delete-item" onclick="deleteItem(${{i}})">🗑️</button>
-                    </div>
-                `;
-                testItemsContainer.appendChild(itemElement);
+        // Configura eventos
+        document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
+            cb.addEventListener('change', function() {{
+                testState[i] = this.checked;
+                updateStatusBar();
+                const action = this.checked ? 'marcou' : 'desmarcou';
+                const itemText = this.nextElementSibling.textContent.trim();
+                addLogEntry(`${{action}} o item: ${{itemText}}`);
             }});
-            updateStatusBar();
-        }}
+        }});
 
-        function renderLog() {{
-            logContainer.innerHTML = '';
-            logEntries.forEach(logMessage => {{
-                 const entryElement = document.createElement('div');
-                 entryElement.className = 'log-entry';
-                 entryElement.textContent = logMessage;
-                 logContainer.appendChild(entryElement);
-            }});
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }}
-
-        function handleCheckboxChange(checkbox, index) {{
-            testState[index] = checkbox.checked;
-            updateStatusBar();
-            const action = checkbox.checked ? 'marcou' : 'desmarcou';
-            const itemText = testItemsData[index].replace(/^-\\s*\\[[ x]\\]\\s*/, '').trim();
-            addLogEntry(`${{action}} o item: ${{itemText}}`);
-        }}
-
-        function deleteItem(index) {{
-            const itemText = testItemsData[index].replace(/^-\\s*\\[[ x]\\]\\s*/, '').trim();
-            if (confirm(`Tem certeza que deseja excluir o item: "${{itemText}}"?`)) {{
-                testItemsData.splice(index, 1);
-                testState.splice(index, 1);
-                renderChecklist();
-                addLogEntry(`Excluiu o item: ${{itemText}}`);
-            }}
-        }}
-
-        function editItem(index) {{
-            const currentText = testItemsData[index].replace(/^-\\s*\\[[ x]\\]\\s*/, '').trim();
-            const newText = prompt("Editar item:", currentText);
-            if (newText !== null && newText.trim() !== '') {{
-                testItemsData[index] = newText.trim();
-                renderChecklist();
-                addLogEntry(`Editou o item ${{index + 1}}: ${{newText.trim()}}`);
-            }} else if (newText !== null) {{
-                 alert("O texto do item não pode ficar em branco.");
-            }}
-        }}
-
-        function addItem() {{
-            const newItemText = prompt("Digite o texto do novo item:");
-            if (newItemText !== null && newItemText.trim() !== '') {{
-                testItemsData.push(newItemText.trim());
-                testState.push(false);
-                renderChecklist();
-                addLogEntry(`Adicionou novo item: ${{newItemText.trim()}}`);
-            }} else if (newItemText !== null) {{
-                 alert("O texto do item não pode ficar em branco.");
-            }}
-        }}
-
-        // Inicializa ao carregar a página
+        // Inicializa
         window.onload = function() {{
-            loadProgress();
+            updateStatusBar();
         }};
     </script>
 </body>
