@@ -61,41 +61,53 @@ def generate_pdf_report(test_items, filename, user_data, completed_items=True):
     pdf.line(10, 20, 200, 20)
     pdf.ln(10)
     
-    # Informações do teste
+    # Informações do teste (em duas colunas)
+    col_width = 90
+    x_pos = pdf.get_x()
+    y_pos = pdf.get_y()
+    
+    # Coluna 1
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, txt="Arquivo original:", ln=0)
+    pdf.cell(col_width, 10, txt="Arquivo original:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=filename, ln=1)
     
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, txt="Responsável:", ln=0)
+    pdf.cell(col_width, 10, txt="Responsável:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=user_data['responsavel'], ln=1)
     
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, txt="Cliente:", ln=0)
+    pdf.cell(col_width, 10, txt="Cliente:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=user_data['cliente'], ln=1)
     
+    # Coluna 2
+    pdf.set_xy(x_pos + col_width + 10, y_pos)
+    
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, txt="Nº História:", ln=0)
+    pdf.cell(col_width, 10, txt="Nº História:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=user_data['numero_historia'], ln=1)
     
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, txt="Data do Teste:", ln=0)
+    pdf.cell(col_width, 10, txt="Data do Teste:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=user_data['data_teste'], ln=1)
     
+    # Volta para a coluna 1 para continuar
+    pdf.set_xy(x_pos, pdf.get_y())
+    
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, txt="Base de Testes:", ln=0)
+    pdf.cell(col_width, 10, txt="Base de Testes:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=user_data['base_testes'], ln=1)
     
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, txt="Arquivos Utilizados:", ln=0)
+    pdf.cell(col_width, 10, txt="Arquivos Utilizados:", ln=0)
     pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 10, txt=user_data['arquivos_utilizados'], ln=1)
+    pdf.multi_cell(0, 10, txt=user_data['arquivos_utilizados'])
+    
     pdf.ln(15)
     
     # Título da seção
@@ -106,7 +118,7 @@ def generate_pdf_report(test_items, filename, user_data, completed_items=True):
     pdf.set_font("Arial", size=12)
     pdf.ln(10)
     
-    # Itens do relatório
+    # Itens do relatório com numeração e formatação melhorada
     for idx, item in enumerate(test_items, 1):
         # Remove marcadores [ ] ou [x] se existirem
         clean_item = item.replace("[ ]", "").replace("[x]", "").strip()
@@ -116,8 +128,10 @@ def generate_pdf_report(test_items, filename, user_data, completed_items=True):
         pdf.multi_cell(0, 8, txt=clean_item)
         pdf.ln(5)
     
-    # Rodapé
-    pdf.ln(15)
+    # Rodapé com borda superior
+    pdf.ln(10)
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+    pdf.ln(5)
     pdf.set_font("Arial", 'I', 10)
     pdf.cell(0, 10, txt=f"Relatório gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=1, align='C')
     
