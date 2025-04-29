@@ -1,3 +1,4 @@
+# app.py
 import streamlit as st
 from docx import Document
 import PyPDF2
@@ -6,7 +7,7 @@ import json
 from datetime import datetime
 from fpdf import FPDF
 
-# Inicializa as variáveis de sessão
+# Inicializa as variáveis de sessão se não existirem
 if 'user_data' not in st.session_state:
     st.session_state.user_data = {
         'responsavel': '',
@@ -27,6 +28,7 @@ def reset_user_data():
         'arquivos_utilizados': '',
         'data_teste': datetime.now().strftime('%Y-%m-%d')
     }
+    # Flag para limpar o localStorage no HTML
     st.session_state.clear_local_storage = True
 
 def extract_text(uploaded_file):
@@ -84,17 +86,6 @@ def generate_pdf_report(test_items, filename, user_data, completed_items=True):
     pdf.cell(40, 10, txt="Data do Teste:", ln=0)
     pdf.set_font("Arial", '', 12)
     pdf.cell(0, 10, txt=user_data['data_teste'], ln=1)
-    
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, txt="Base de Testes:", ln=0)
-    pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 10, txt=user_data['base_testes'], ln=1)
-    
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, txt="Arquivos Utilizados:", ln=0)
-    pdf.set_font("Arial", '', 12)
-    pdf.multi_cell(0, 10, txt=user_data['arquivos_utilizados'])
-    
     pdf.ln(15)
     
     # Título da seção
@@ -107,6 +98,7 @@ def generate_pdf_report(test_items, filename, user_data, completed_items=True):
     
     # Itens do relatório
     for idx, item in enumerate(test_items, 1):
+        # Remove marcadores [ ] ou [x] se existirem
         clean_item = item.replace("[ ]", "").replace("[x]", "").strip()
         pdf.set_font("Arial", 'B', 12)
         pdf.cell(10, 8, txt=f"{idx}.", ln=0)
@@ -115,49 +107,31 @@ def generate_pdf_report(test_items, filename, user_data, completed_items=True):
         pdf.ln(5)
     
     # Rodapé
-    pdf.ln(10)
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(5)
+    pdf.ln(15)
     pdf.set_font("Arial", 'I', 10)
     pdf.cell(0, 10, txt=f"Relatório gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=1, align='C')
     
     return pdf.output(dest='S').encode('latin1')
 
 def generate_html_report(test_items, filename, initial_checks=None, user_data=None):
-    """Gera um relatório HTML interativo com todos os recursos"""
+    """Gera um relatório HTML interativo com o layout do arquivo fornecido"""
     if initial_checks is None:
         initial_checks = [False] * len(test_items)
     
     if user_data is None:
         user_data = st.session_state.user_data
     
-    # Script para limpar o localStorage
+    # Script para limpar o localStorage se necessário
     clear_storage_script = ""
     if hasattr(st.session_state, 'clear_local_storage') and st.session_state.clear_local_storage:
         clear_storage_script = """
         <script>
+            // Limpa o localStorage completamente
             localStorage.clear();
         </script>
         """
         del st.session_state.clear_local_storage
     
-    # Gera os itens do checklist com ações
-    test_items_html = []
-    for i, item in enumerate(test_items):
-        item_text = item.replace("[ ]", "").replace("[x]", "").strip()
-        checked_attr = "checked" if initial_checks[i] else ""
-        item_html = f'''
-        <div class="checklist-item" data-index="{i}">
-            <input type="checkbox" id="item{i}" {checked_attr}>
-            <label for="item{i}">{item_text}</label>
-            <div class="item-actions">
-                <button class="btn-edit" onclick="editItem({i})">✏️</button>
-                <button class="btn-delete" onclick="deleteItem({i})">🗑️</button>
-            </div>
-        </div>
-        '''
-        test_items_html.append(item_html)
-
     html_content = f"""
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -255,148 +229,72 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             box-sizing: border-box;
         }}
         
-        .section-title-container {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 25px 0 15px;
-            border-bottom: 2px solid var(--secondary-color);
-            padding-bottom: 5px;
-        }}
-
         .section-title {{
             color: var(--primary-color);
-            margin: 0;
-            border-bottom: none;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 5px;
+            margin: 25px 0 15px;
         }}
         
         .checklist-item {{
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 10px;
-            padding: 12px 15px;
+            padding: 10px;
             border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 4px;
             background-color: white;
-            transition: all 0.2s ease;
         }}
         
         .checklist-item:hover {{
             background-color: #f8f9fa;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }}
         
         .checklist-item input[type="checkbox"] {{
-            margin-right: 12px;
+            margin-right: 10px;
+            margin-top: 3px;
             min-width: 18px;
             height: 18px;
-            cursor: pointer;
         }}
         
         .checklist-item label {{
             font-weight: normal;
             cursor: pointer;
             flex-grow: 1;
-            margin: 0;
-            line-height: 1.5;
-        }}
-
-        .item-actions {{
-            display: flex;
-            gap: 8px;
-            margin-left: 10px;
-        }}
-
-        .btn-edit, .btn-delete {{
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.1rem;
-            padding: 5px;
-            line-height: 1;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }}
-
-        .btn-edit {{
-            color: var(--warning-color);
-        }}
-
-        .btn-edit:hover {{
-            background-color: rgba(255, 193, 7, 0.1);
-        }}
-
-        .btn-delete {{
-            color: var(--danger-color);
-        }}
-
-        .btn-delete:hover {{
-            background-color: rgba(220, 53, 69, 0.1);
-        }}
-
-        .btn-add-item {{
-            background-color: var(--success-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 12px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s;
-        }}
-
-        .btn-add-item:hover {{
-            background-color: #218838;
-            transform: translateY(-1px);
         }}
         
         .status-bar {{
             margin: 20px 0;
-            padding: 12px;
-            border-radius: 6px;
+            padding: 10px;
+            border-radius: 4px;
             text-align: center;
             font-weight: 600;
-            font-size: 1.1rem;
         }}
         
         .status-incomplete {{
             background-color: #fff3cd;
             color: #856404;
-            border: 1px solid #ffeeba;
         }}
         
         .status-complete {{
             background-color: #d4edda;
             color: #155724;
-            border: 1px solid #c3e6cb;
         }}
         
         .buttons {{
             display: flex;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
-            margin: 25px 0;
+            margin-top: 20px;
         }}
         
         button {{
-            padding: 12px 20px;
+            padding: 10px 15px;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
-            flex: 1;
-            min-width: 180px;
-        }}
-        
-        button:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: background-color 0.3s;
         }}
         
         .btn-primary {{
@@ -404,17 +302,9 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             color: white;
         }}
         
-        .btn-primary:hover {{
-            background-color: #004494;
-        }}
-        
         .btn-success {{
             background-color: var(--success-color);
             color: white;
-        }}
-        
-        .btn-success:hover {{
-            background-color: #218838;
         }}
         
         .btn-danger {{
@@ -422,17 +312,9 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             color: white;
         }}
         
-        .btn-danger:hover {{
-            background-color: #c82333;
-        }}
-        
         .btn-warning {{
             background-color: var(--warning-color);
             color: #212529;
-        }}
-        
-        .btn-warning:hover {{
-            background-color: #e0a800;
         }}
         
         .btn-secondary {{
@@ -440,36 +322,28 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             color: white;
         }}
         
-        .btn-secondary:hover {{
-            background-color: #23272b;
-        }}
-        
         .log-container {{
             margin-top: 30px;
             max-height: 300px;
             overflow-y: auto;
             border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 15px;
+            border-radius: 4px;
+            padding: 10px;
             background-color: #f8f9fa;
         }}
         
         .log-entry {{
-            margin-bottom: 8px;
-            padding: 8px 12px;
+            margin-bottom: 5px;
+            padding: 5px;
             border-bottom: 1px solid #eee;
             font-size: 0.9rem;
-            background-color: white;
-            border-radius: 4px;
         }}
         
         footer {{
-            margin-top: 40px;
+            margin-top: 30px;
             text-align: center;
             color: #6c757d;
             font-size: 0.9rem;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color);
         }}
         
         @media (max-width: 768px) {{
@@ -479,7 +353,7 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             
             .form-row {{
                 flex-direction: column;
-                gap: 12px;
+                gap: 15px;
             }}
             
             .form-group, .form-group-small, .form-group-medium {{
@@ -489,16 +363,10 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             
             .buttons {{
                 flex-direction: column;
-                gap: 10px;
             }}
             
             button {{
                 width: 100%;
-                min-width: auto;
-            }}
-            
-            .checklist-item {{
-                padding: 10px 12px;
             }}
         }}
     </style>
@@ -544,6 +412,386 @@ def generate_html_report(test_items, filename, initial_checks=None, user_data=No
             </div>
         </div>
         
-        <div class="section-title-container">
-            <h2 class="section-title">Checklist de Validação</h2>
-            <button class="btn-add-item"
+        <h2 class="section-title">Checklist de Validação</h2>
+        
+        <div id="testItemsContainer">
+            {''.join([
+                f'<div class="checklist-item"><input type="checkbox" id="item{i}" {"checked" if initial_checks[i] else ""}>'
+                f'<label for="item{i}">{item.replace("[ ]", "").replace("[x]", "")}</label></div>'
+                for i, item in enumerate(test_items)
+            ])}
+        </div>
+        
+        <div class="status-bar status-incomplete" id="status-bar">
+            0 de {len(test_items)} itens verificados (0%)
+        </div>
+        
+        <div class="buttons">
+            <button class="btn-primary" onclick="saveProgress()">Salvar Progresso</button>
+            <button class="btn-success" onclick="selectAllTests()">Marcar Todos</button>
+            <button class="btn-danger" onclick="resetTests()">Reiniciar Testes</button>
+            <button class="btn-warning" onclick="exportReport()">Relatório de Testes</button>
+            <button class="btn-secondary" onclick="exportPending()">Ajustes Pendentes</button>
+        </div>
+        
+        <h3 class="section-title">Log de Alterações</h3>
+        <div class="log-container" id="logEntries"></div>
+        
+        <footer>
+            <p>© {datetime.now().strftime('%Y')} - Relatório gerado automaticamente</p>
+        </footer>
+    </div>
+
+    <script>
+        // Inicializa variáveis
+        const totalItems = {len(test_items)};
+        let testState = {json.dumps(initial_checks)};
+        let logEntries = ['Documento carregado'];
+
+        // Atualiza a barra de status
+        function updateStatusBar() {{
+            const checkedCount = testState.filter(x => x).length;
+            const percentage = Math.round((checkedCount / totalItems) * 100);
+            const statusBar = document.getElementById('status-bar');
+            
+            statusBar.textContent = `${{checkedCount}} de ${{totalItems}} itens verificados (${{percentage}}%)`;
+            
+            if (checkedCount === totalItems) {{
+                statusBar.classList.remove('status-incomplete');
+                statusBar.classList.add('status-complete');
+            }} else {{
+                statusBar.classList.remove('status-complete');
+                statusBar.classList.add('status-incomplete');
+            }}
+        }}
+
+        // Adiciona entrada no log
+        function addLogEntry(action) {{
+            const now = new Date();
+            const timestamp = now.toLocaleString('pt-BR');
+            logEntries.push(`[${{timestamp}}] ${{action}}`);
+            
+            const logContainer = document.getElementById('logEntries');
+            const entryElement = document.createElement('div');
+            entryElement.className = 'log-entry';
+            entryElement.textContent = logEntries[logEntries.length - 1];
+            logContainer.appendChild(entryElement);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }}
+
+        // Salva progresso no localStorage
+        function saveProgress() {{
+            const userData = {{
+                responsavel: document.getElementById('responsavel').value,
+                data_teste: document.getElementById('data-teste').value,
+                cliente: document.getElementById('cliente').value,
+                numero_historia: document.getElementById('numero-historia').value,
+                base_testes: document.getElementById('base-testes').value,
+                arquivos_utilizados: document.getElementById('arquivos-utilizados').value
+            }};
+            
+            // Valida campos obrigatórios
+            if (!userData.responsavel || !userData.cliente || !userData.numero_historia || 
+                !userData.base_testes || !userData.arquivos_utilizados) {{
+                alert('Por favor, preencha todos os campos antes de salvar!');
+                return;
+            }}
+            
+            localStorage.setItem('testProgress', JSON.stringify(testState));
+            localStorage.setItem('userData', JSON.stringify(userData));
+            
+            addLogEntry('Progresso salvo com sucesso');
+            alert('Progresso salvo com sucesso!');
+        }}
+
+        // Marca todos os itens
+        function selectAllTests() {{
+            testState = Array(totalItems).fill(true);
+            document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
+                cb.checked = true;
+            }});
+            updateStatusBar();
+            addLogEntry('Todos os itens foram marcados');
+        }}
+
+        // Exporta relatório completo em PDF
+        function exportReport() {{
+            const userData = {{
+                responsavel: document.getElementById('responsavel').value,
+                data_teste: document.getElementById('data-teste').value,
+                cliente: document.getElementById('cliente').value,
+                numero_historia: document.getElementById('numero-historia').value,
+                base_testes: document.getElementById('base-testes').value,
+                arquivos_utilizados: document.getElementById('arquivos-utilizados').value
+            }};
+            
+            const completedItems = [];
+            document.querySelectorAll('#testItemsContainer .checklist-item').forEach((item, i) => {{
+                if (testState[i]) {{
+                    completedItems.push(item.querySelector('label').textContent.trim());
+                }}
+            }});
+            
+            if (completedItems.length === 0) {{
+                alert('Não há itens verificados para exportar!');
+                return;
+            }}
+            
+            // Cria um link para download do PDF
+            const pdfData = {{
+                items: completedItems,
+                filename: '{filename}',
+                user_data: userData,
+                report_type: 'completed'
+            }};
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pdfData));
+            const exportName = 'relatorio_testes_{filename.split('.')[0]}.pdf';
+            
+            const link = document.createElement('a');
+            link.setAttribute('href', dataStr);
+            link.setAttribute('download', exportName);
+            link.click();
+            
+            addLogEntry('Relatório de testes exportado em PDF');
+        }}
+
+        // Exporta itens pendentes em PDF
+        function exportPending() {{
+            const userData = {{
+                responsavel: document.getElementById('responsavel').value,
+                data_teste: document.getElementById('data-teste').value,
+                cliente: document.getElementById('cliente').value,
+                numero_historia: document.getElementById('numero-historia').value,
+                base_testes: document.getElementById('base-testes').value,
+                arquivos_utilizados: document.getElementById('arquivos-utilizados').value
+            }};
+            
+            const pendingItems = [];
+            document.querySelectorAll('#testItemsContainer .checklist-item').forEach((item, i) => {{
+                if (!testState[i]) {{
+                    pendingItems.push(item.querySelector('label').textContent.trim());
+                }}
+            }});
+            
+            if (pendingItems.length === 0) {{
+                alert('Não há itens pendentes para exportar!');
+                return;
+            }}
+            
+            // Cria um link para download do PDF
+            const pdfData = {{
+                items: pendingItems,
+                filename: '{filename}',
+                user_data: userData,
+                report_type: 'pending'
+            }};
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pdfData));
+            const exportName = 'ajustes_pendentes_{filename.split('.')[0]}.pdf';
+            
+            const link = document.createElement('a');
+            link.setAttribute('href', dataStr);
+            link.setAttribute('download', exportName);
+            link.click();
+            
+            addLogEntry('Ajustes pendentes exportados em PDF');
+        }}
+
+        // Reinicia todos os testes
+        function resetTests() {{
+            if (confirm('Tem certeza que deseja reiniciar todos os testes?')) {{
+                testState = Array(totalItems).fill(false);
+                document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
+                    cb.checked = false;
+                }});
+                updateStatusBar();
+                addLogEntry('Todos os testes foram reiniciados');
+            }}
+        }}
+
+        // Carrega progresso salvo - MODIFICADO PARA SEMPRE COMEÇAR LIMPO
+        function loadProgress() {{
+            // SEMPRE COMEÇA COM LOG LIMPO
+            logEntries = ['Documento carregado'];
+            const logContainer = document.getElementById('logEntries');
+            logContainer.innerHTML = '';
+            const entryElement = document.createElement('div');
+            entryElement.className = 'log-entry';
+            entryElement.textContent = logEntries[0];
+            logContainer.appendChild(entryElement);
+            
+            // Limpa todos os checks
+            testState = Array(totalItems).fill(false);
+            document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
+                cb.checked = false;
+            }});
+            
+            // Limpa todos os campos do formulário
+            document.getElementById('responsavel').value = '';
+            document.getElementById('cliente').value = '';
+            document.getElementById('numero-historia').value = '';
+            document.getElementById('base-testes').value = '';
+            document.getElementById('arquivos-utilizados').value = '';
+            document.getElementById('data-teste').value = '{datetime.now().strftime('%Y-%m-%d')}';
+            
+            updateStatusBar();
+        }}
+
+        // Configura eventos
+        document.querySelectorAll('#testItemsContainer input[type="checkbox"]').forEach((cb, i) => {{
+            cb.addEventListener('change', function() {{
+                testState[i] = this.checked;
+                updateStatusBar();
+                const action = this.checked ? 'marcou' : 'desmarcou';
+                const itemText = this.nextElementSibling.textContent.trim();
+                addLogEntry(`${{action}} o item: ${{itemText}}`);
+            }});
+        }});
+
+        // Inicializa
+        window.onload = function() {{
+            loadProgress();
+        }};
+    </script>
+</body>
+</html>
+    """
+    return html_content
+
+def main():
+    st.set_page_config(page_title="Controle de Testes", layout="centered")
+    
+    st.title("📋 Controle de Testes")
+    st.markdown("""
+    ### Como usar:
+    1. Faça upload de um arquivo DOCX ou PDF
+    2. Preencha as informações do teste
+    3. Baixe o relatório HTML interativo
+    4. Abra o HTML em qualquer navegador para usar as funcionalidades
+    """)
+    
+    uploaded_file = st.file_uploader(
+        "Arraste e solte seu arquivo aqui (DOCX ou PDF)",
+        type=['docx', 'pdf'],
+        accept_multiple_files=False,
+        help="Tamanho máximo: 200MB"
+    )
+    
+    if uploaded_file:
+        with st.spinner("Processando arquivo..."):
+            try:
+                # Reseta os dados do usuário quando um novo arquivo é carregado
+                reset_user_data()
+                
+                text_content = extract_text(uploaded_file)
+                
+                if text_content:
+                    # Processa linhas relevantes
+                    lines = [line.strip() for line in text_content.split('\n') if line.strip()]
+                    test_items = [f"- [ ] {line[:250]}" for line in lines if len(line.split()) > 3][:50]
+                    
+                    if test_items:
+                        # Coleta informações adicionais do usuário
+                        with st.expander("Informações do Teste", expanded=True):
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.session_state.user_data['responsavel'] = st.text_input(
+                                    "Responsável:", 
+                                    value=st.session_state.user_data['responsavel'],
+                                    max_chars=15
+                                )
+                                st.session_state.user_data['cliente'] = st.text_input(
+                                    "Cliente:", 
+                                    value=st.session_state.user_data['cliente'],
+                                    max_chars=20
+                                )
+                                st.session_state.user_data['numero_historia'] = st.text_input(
+                                    "Nº História:",
+                                    value=st.session_state.user_data['numero_historia']
+                                )
+                            with col2:
+                                data_teste = st.date_input(
+                                    "Data do Teste:",
+                                    value=datetime.strptime(st.session_state.user_data['data_teste'], '%Y-%m-%d') if st.session_state.user_data['data_teste'] else datetime.now()
+                                )
+                                st.session_state.user_data['data_teste'] = data_teste.strftime('%Y-%m-%d')
+                                st.session_state.user_data['base_testes'] = st.text_input(
+                                    "Base de Testes:",
+                                    value=st.session_state.user_data['base_testes']
+                                )
+                                st.session_state.user_data['arquivos_utilizados'] = st.text_input(
+                                    "Arquivos Utilizados:",
+                                    value=st.session_state.user_data['arquivos_utilizados']
+                                )
+                        
+                        html_report = generate_html_report(
+                            test_items, 
+                            uploaded_file.name, 
+                            user_data=st.session_state.user_data
+                        )
+                        
+                        st.success("✅ Relatório interativo gerado com sucesso!")
+                        
+                        # Botão para download do HTML
+                        st.download_button(
+                            label="⬇️ Baixar Controle de Testes (HTML)",
+                            data=html_report,
+                            file_name=f"controle_testes_{uploaded_file.name.split('.')[0]}.html",
+                            mime="text/html"
+                        )
+                        
+                        # Botões para gerar PDFs diretamente
+                        st.markdown("### Gerar Relatórios em PDF")
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            if st.button("📄 Relatório Completo (Testes Validados)", 
+                                       help="Gera PDF com todos os itens marcados como validados"):
+                                completed_items = [
+                                    item.replace("[ ]", "").replace("[x]", "") 
+                                    for item in test_items 
+                                ]
+                                pdf_report = generate_pdf_report(
+                                    completed_items,
+                                    uploaded_file.name,
+                                    st.session_state.user_data,
+                                    completed_items=True
+                                )
+                                st.download_button(
+                                    label="⬇️ Baixar Relatório Completo",
+                                    data=pdf_report,
+                                    file_name=f"relatorio_testes_{uploaded_file.name.split('.')[0]}.pdf",
+                                    mime="application/pdf"
+                                )
+                        
+                        with col2:
+                            if st.button("⚠️ Ajustes Pendentes", 
+                                       help="Gera PDF com itens não marcados (pendentes)"):
+                                pending_items = [
+                                    item.replace("[ ]", "").replace("[x]", "") 
+                                    for item in test_items 
+                                ]
+                                pdf_report = generate_pdf_report(
+                                    pending_items,
+                                    uploaded_file.name,
+                                    st.session_state.user_data,
+                                    completed_items=False
+                                )
+                                st.download_button(
+                                    label="⬇️ Baixar Ajustes Pendentes",
+                                    data=pdf_report,
+                                    file_name=f"ajustes_pendentes_{uploaded_file.name.split('.')[0]}.pdf",
+                                    mime="application/pdf"
+                                )
+                            
+                    else:
+                        st.warning("Não foram identificados itens de teste no documento.")
+                else:
+                    st.error("Não foi possível extrair conteúdo do arquivo")
+            
+            except Exception as e:
+                st.error(f"Erro durante o processamento: {str(e)}")
+
+if __name__ == "__main__":
+    main()
