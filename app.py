@@ -695,7 +695,6 @@ def main():
                         html_report = generate_html_report(test_items, uploaded_file.name, user_data=user_data)
                         
                         st.success("✅ Relatório interativo gerado com sucesso!")
-                        st.balloons()
                         
                         # Botão para download do HTML
                         st.download_button(
