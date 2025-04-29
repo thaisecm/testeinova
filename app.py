@@ -18,6 +18,17 @@ if 'user_data' not in st.session_state:
         'data_teste': datetime.now().strftime('%Y-%m-%d')
     }
 
+def reset_user_data():
+    """Reseta os dados do usuário para valores padrão"""
+    st.session_state.user_data = {
+        'responsavel': '',
+        'cliente': '',
+        'numero_historia': '',
+        'base_testes': '',
+        'arquivos_utilizados': '',
+        'data_teste': datetime.now().strftime('%Y-%m-%d')
+    }
+
 def extract_text(uploaded_file):
     """Extrai texto de arquivos DOCX ou PDF"""
     try:
@@ -667,6 +678,9 @@ def main():
     if uploaded_file:
         with st.spinner("Processando arquivo..."):
             try:
+                # Reseta os dados do usuário quando um novo arquivo é carregado
+                reset_user_data()
+                
                 text_content = extract_text(uploaded_file)
                 
                 if text_content:
